@@ -9,6 +9,28 @@ import UIKit
 import Foundation
 
 @objc
+public final class CheckForUpdateParams: NSObject {
+
+  @objc
+  public init(
+    apiKey: String,
+    tagName: String? = nil,
+    requiresLogin: Bool = false,
+    connection: String? = nil)
+  {
+    self.apiKey = apiKey
+    self.tagName = tagName
+    self.requiresLogin = requiresLogin
+    self.connection = connection
+  }
+
+  public let apiKey: String
+  public let tagName: String?
+  public let requiresLogin: Bool
+  public let connection: String?
+}
+
+@objc
 public final class ETDistribution: NSObject {
   // MARK: - Public
   @objc(sharedInstance)
@@ -40,10 +62,11 @@ public final class ETDistribution: NSObject {
   ///     }
   /// }
   /// ```
-  public func checkForUpdate(apiKey: String,
-                             tagName: String? = nil,
-                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
-    checkRequest(apiKey: apiKey, tagName: tagName, completion: completion)
+  public func checkForUpdate(
+    params: CheckForUpdateParams,
+    completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil)
+  {
+    checkRequest(params: params)
   }
   
   /// Checks if there is an update available for the app, based on the provided `apiKey` and `tagName`with Objective-C compatibility.
@@ -70,11 +93,10 @@ public final class ETDistribution: NSObject {
   /// })
   /// ```
   @objc
-  public func checkForUpdate(apiKey: String,
-                             tagName: String?,
+  public func checkForUpdate(params: CheckForUpdateParams,
                              onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
                              onError: ((Error) -> Void)? = nil) {
-    checkRequest(apiKey: apiKey, tagName: tagName) { result in
+    checkRequest(params: params) { result in
       switch result {
       case.success(let releaseInfo):
         onReleaseAvailable?(releaseInfo)
@@ -103,8 +125,7 @@ public final class ETDistribution: NSObject {
     super.init()
   }
 
-  private func checkRequest(apiKey: String, 
-                            tagName: String?,
+  private func checkRequest(params: CheckForUpdateParams,
                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
 #if targetEnvironment(simulator)
     // Not checking for updates on the simulator
@@ -114,18 +135,24 @@ public final class ETDistribution: NSObject {
       // Not checking for updates when the debugger is attached
       return
     }
-    
+
+    if params.requiresLogin {
+      Auth.login(connection: params.connection) { _ in
+
+      }
+    }
+
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }
     
     components.queryItems = [
-      URLQueryItem(name: "apiKey", value: apiKey),
+      URLQueryItem(name: "apiKey", value: params.apiKey),
       URLQueryItem(name: "binaryIdentifier", value: uuid),
       URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
       URLQueryItem(name: "platform", value: "ios")
     ]
-    if let tagName = tagName {
+    if let tagName = params.tagName {
       components.queryItems?.append(URLQueryItem(name: "tag", value: tagName))
     }
     
@@ -204,4 +231,3 @@ public final class ETDistribution: NSObject {
     UserDefaults.postponeTimeout = Date(timeIntervalSinceNow: 60 * 60 * 24)
   }
 }
-
