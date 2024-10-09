@@ -61,9 +61,6 @@
 			);
 			dependencies = (
 			);
-			fileSystemSynchronizedGroups = (
-				F46D23302CB6DA330055E5F5 /* DemoApp */,
-			);
 			name = DemoApp;
 			packageProductDependencies = (
 				F46D236B2CB6DA730055E5F5 /* ETDistribution */,
