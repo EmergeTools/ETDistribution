@@ -2,8 +2,10 @@
 //  UpdateUtilObjc.m
 //  DemoApp
 //
-//  Created by Emerge Tools on 9/10/24.
+//  Created by Itay Brenner on 9/10/24.
+//  Copyright © 2024 Emerge Tools. All rights reserved.
 //
+
 
 #import "UpdateUtilObjc.h"
 #import "DemoApp-Swift.h"
