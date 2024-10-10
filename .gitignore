@@ -4,3 +4,5 @@
 **/*.xcodeproj/xcshareddata/
 .swiftpm
 .build
+*.xcarchive
+*.xcframework
