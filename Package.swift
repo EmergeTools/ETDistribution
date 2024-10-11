@@ -17,8 +17,7 @@ let package = Package(
     targets: [
         .target(
             name: "ETDistribution",
-            dependencies: [],
-            path: "ETDistribution"
+            dependencies: []
         ),
     ]
 )

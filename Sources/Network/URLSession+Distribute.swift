@@ -32,7 +32,7 @@ extension URLSession {
         return
       }
       guard (200...299).contains(httpResponse.statusCode) else {
-        var errorMessage = (
+        let errorMessage = (
           try? JSONDecoder().decode(
             DistributionUpdateCheckErrorResponse.self,
             from: data
