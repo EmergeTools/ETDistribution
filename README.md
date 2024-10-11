@@ -38,6 +38,7 @@ dependencies: [
 ### Checking for Updates
 The ETDistribution library provides a simple API to check for updates:
 ```swift
+import UIKit
 import ETDistribution
 
 ETDistribution.shared.checkForUpdate(apiKey: "YOUR_API_KEY") { result in
@@ -45,6 +46,12 @@ ETDistribution.shared.checkForUpdate(apiKey: "YOUR_API_KEY") { result in
     case .success(let releaseInfo):
         if let releaseInfo {
             print("Update found: \(releaseInfo)")
+            guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
+              return
+            }
+            UIApplication.shared.open(url) { _ in
+              exit(0)
+            }
         } else {
             print("Already up to date")
         }
@@ -66,11 +73,7 @@ For Objective-C:
                                       }];
 ```
 
-If you already have the `plist` url for the update, you can get the `itms-services` url by calling `buildUrlForInstall`:
-```swift
-if let installUrl = ETDistribution.shared.buildUrlForInstall("https://example.com/app.plist") {
-    UIApplication.shared.open(installUrl, options: [:], completionHandler: nil)
-}
+If you do not provide a completion handler, a default UI will be shown asking if the update should be installed.
 ```
 
 ## Configuration
@@ -102,4 +105,4 @@ The library is designed to skip update checks on the simulator. To test update f
 
 ### How do I skip an update?
 
-There is no public API to programatically skip updates right now.
+When handling the response you can check the release version field to decide if it should be installed or not.

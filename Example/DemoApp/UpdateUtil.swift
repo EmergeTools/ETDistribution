@@ -8,6 +8,7 @@
 
 
 import Foundation
+import UIKit
 import ETDistribution
 
 struct UpdateUtil {
@@ -17,6 +18,12 @@ struct UpdateUtil {
         case .success(let releaseInfo):
             if let releaseInfo {
                 print("Update found: \(releaseInfo)")
+                guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
+                  return
+                }
+                UIApplication.shared.open(url) { _ in
+                  exit(0)
+                }
             } else {
                 print("Already up to date")
             }
