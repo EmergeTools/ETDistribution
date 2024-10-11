@@ -24,7 +24,6 @@ struct BinaryParser {
     
     for i in 0..<_dyld_image_count() {
       guard let header = _dyld_get_image_header(i) else { continue }
-      let imageName = _dyld_get_image_name(0)
       let imagePath = String(cString: _dyld_get_image_name(i))
       
       guard imagePath == executablePath else {
@@ -32,7 +31,7 @@ struct BinaryParser {
       }
 
       var _uuid = UUID().uuid
-      let result = withUnsafeMutablePointer(to: &_uuid) {
+      let _ = withUnsafeMutablePointer(to: &_uuid) {
         _dyld_get_image_uuid(header, $0)
       }
       return formatUUID(_uuid)

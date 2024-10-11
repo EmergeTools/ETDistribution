@@ -109,7 +109,7 @@ public final class ETDistribution: NSObject {
 #if targetEnvironment(simulator)
     // Not checking for updates on the simulator
     return
-#endif
+#else
     guard !isDebuggerAttached() else {
       // Not checking for updates when the debugger is attached
       return
@@ -136,13 +136,14 @@ public final class ETDistribution: NSObject {
     request.httpMethod = "GET"
     
     session.checkForUpdate(request) { [weak self] result in
-      var mappedResult = result.map { $0.updateInfo }
+      let mappedResult = result.map { $0.updateInfo }
       if let completion = completion {
         completion(mappedResult)
       } else if let response = try? mappedResult.get() {
         self?.handleResponse(response: response)
       }
     }
+#endif
   }
   
   private func handleResponse(response: DistributionReleaseInfo) {

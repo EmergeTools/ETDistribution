@@ -24,7 +24,7 @@ extension UserDefaults {
   
   class var postponeTimeout: Date? {
     get {
-      let epoch = UserDefaults(suiteName: "com.emerge.distribution")!.double(forKey: Keys.skipedRelease) ?? 0
+      let epoch = UserDefaults(suiteName: "com.emerge.distribution")!.double(forKey: Keys.skipedRelease)
       return Date(timeIntervalSince1970: epoch)
     }
     set {
