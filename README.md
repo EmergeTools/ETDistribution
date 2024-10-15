@@ -74,7 +74,6 @@ For Objective-C:
 ```
 
 If you do not provide a completion handler, a default UI will be shown asking if the update should be installed.
-```
 
 ## Configuration
 
