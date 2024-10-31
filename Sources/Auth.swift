@@ -23,7 +23,7 @@ enum Auth {
     static let refreshTokenKey = "refreshToken"
   }
   
-  static func getAccessToken(connection: String?, completion: @escaping (Result<String, Error>) -> Void) {
+  static func getAccessToken(settings: CheckForUpdateParams.LoginSetting, completion: @escaping (Result<String, Error>) -> Void) {
     if let token = KeychainHelper.getToken(key: Constants.accessTokenKey),
        JWTHelper.isValid(token: token) {
       completion(.success(token))
@@ -33,16 +33,16 @@ enum Auth {
         case .success(let accessToken):
           completion(.success(accessToken))
         case .failure(let error):
-          requestLogin(connection: connection, completion: completion)
+          requestLogin(settings, completion)
         }
       }
     } else {
-      requestLogin(connection: connection, completion: completion)
+      requestLogin(settings, completion)
     }
   }
   
-  private static func requestLogin(connection: String?, completion: @escaping (Result<String, Error>) -> Void) {
-    login(connection: connection) { result in
+  private static func requestLogin(_ settings: CheckForUpdateParams.LoginSetting, _ completion: @escaping (Result<String, Error>) -> Void) {
+    login(settings: settings) { result in
       switch result {
       case .success(let response):
         do {
@@ -88,7 +88,7 @@ enum Auth {
   }
 
   private static func login(
-    connection: String? = nil,
+    settings: CheckForUpdateParams.LoginSetting,
     completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
   {
     let verifier = getVerifier()!
@@ -102,8 +102,8 @@ enum Auth {
     entries["scope"] = "openid profile email offline_access"
     entries["client_id"] = Constants.clientId
     entries["response_type"] = "code"
-    if let connection {
-      entries["connection"] = connection
+    if case .connection(let string) = settings {
+      entries["connection"] = string
     }
     entries["redirect_uri"] = Constants.redirectUri.absoluteString
     entries["state"] = generateDefaultState()
