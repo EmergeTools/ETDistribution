@@ -14,39 +14,99 @@ enum LoginError: Error {
   case invalidData
 }
 
-struct TokenResponse: Decodable {
-  let tokenType: String
-  let idToken: String
-  let expiresIn: Int
-  let accessToken: String
-}
-
 enum Auth {
-
+  private enum Constants {
+    static let url = URL(string: "https://auth.emergetools.com")!
+    static let clientId = "XiFbzCzBHV5euyxbcxNHbqOHlKcTwzBX"
+    static let redirectUri = URL(string: "app.install.callback://callback")!
+    static let accessTokenKey = "accessToken"
+    static let refreshTokenKey = "refreshToken"
+  }
+  
   static func getAccessToken(connection: String?, completion: @escaping (Result<String, Error>) -> Void) {
-    // TODO: Store token/refresh
-    login(connection: connection, completion: completion)
+    if let token = KeychainHelper.getToken(key: Constants.accessTokenKey),
+       JWTHelper.isValid(token: token) {
+      completion(.success(token))
+    } else if let refreshToken = KeychainHelper.getToken(key: Constants.refreshTokenKey) {
+      refreshAccessToken(refreshToken) { result in
+        switch result {
+        case .success(let accessToken):
+          completion(.success(accessToken))
+        case .failure(let error):
+          requestLogin(connection: connection, completion: completion)
+        }
+      }
+      completion(.success(refreshToken))
+    } else {
+      requestLogin(connection: connection, completion: completion)
+    }
+  }
+  
+  private static func requestLogin(connection: String?, completion: @escaping (Result<String, Error>) -> Void) {
+    login(connection: connection) { result in
+      switch result {
+      case .success(let response):
+        do {
+          try KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey)
+          try KeychainHelper.setToken(response.refreshToken, key: Constants.refreshTokenKey)
+          completion(.success(response.accessToken))
+        } catch {
+          completion(.failure(error))
+        }
+      case .failure(let error):
+        completion(.failure(error))
+      }
+    }
+  }
+  
+  private static func refreshAccessToken(_ refreshToken: String, completion: @escaping (Result<String, Error>) -> Void) {
+    let url = URL(string: "oauth/token", relativeTo: Constants.url)!
+
+    let parameters = [
+      "grant_type": "refresh_token",
+      "client_id": Constants.clientId,
+      "refresh_token": refreshToken,
+    ]
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = try! JSONSerialization.data(withJSONObject: parameters, options: [])
+    
+    URLSession(configuration: URLSessionConfiguration.ephemeral).refreshAccessToken(request) { result in
+      switch result {
+      case .success(let response):
+        do {
+          try KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey)
+          completion(.success(response.accessToken))
+        } catch {
+          completion(.failure(error))
+        }
+      case .failure(let error):
+        completion(.failure(error))
+      }
+    }
   }
 
-  static func login(
+  private static func login(
     connection: String? = nil,
-    completion: @escaping (Result<String, Error>) -> Void)
+    completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
   {
     let verifier = getVerifier()!
     let challenge = getChallenge(for: verifier)!
 
-    let authorize = URL(string: "authorize", relativeTo: self.url)!
+    let authorize = URL(string: "authorize", relativeTo: Constants.url)!
     var components = URLComponents(url: authorize, resolvingAgainstBaseURL: true)!
     var items: [URLQueryItem] = []
     var entries: [String: String] = [:]
 
-    entries["scope"] = "openid profile email"
-    entries["client_id"] = clientId
+    entries["scope"] = "openid profile email offline_access"
+    entries["client_id"] = Constants.clientId
     entries["response_type"] = "code"
     if let connection {
       entries["connection"] = connection
     }
-    entries["redirect_uri"] = redirectUri.absoluteString
+    entries["redirect_uri"] = Constants.redirectUri.absoluteString
     entries["state"] = generateDefaultState()
     entries.forEach { items.append(URLQueryItem(name: $0, value: $1)) }
     components.queryItems = items
@@ -55,7 +115,7 @@ enum Auth {
     let url = components.url!
     let session = ASWebAuthenticationSession(
       url: url,
-      callbackURLScheme: redirectUri.scheme!) { url, error in
+      callbackURLScheme: Constants.redirectUri.scheme!) { url, error in
         if let error {
           completion(.failure(error))
           return
@@ -66,8 +126,7 @@ enum Auth {
           let code = components!.queryItems!.first(where: { $0.name == "code"})
           if let code {
             self.exchangeAuthorizationCodeForTokens(authorizationCode: code.value!, verifier: verifier) { result in
-              print(result)
-              completion(result.map { $0.accessToken } )
+              completion(result)
             }
           } else {
             completion(.failure(LoginError.noCode))
@@ -80,52 +139,27 @@ enum Auth {
     session.start()
   }
 
-  private static let url = URL(string: "https://auth.emergetools.com")!
-  private static let clientId = "XiFbzCzBHV5euyxbcxNHbqOHlKcTwzBX"
-  private static let redirectUri = URL(string: "app.install.callback://callback")!
-
   private static func exchangeAuthorizationCodeForTokens(
     authorizationCode: String,
     verifier: String,
-    completion: @escaping (Result<TokenResponse, Error>) -> Void)
+    completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
   {
-    let url = URL(string: "oauth/token", relativeTo: self.url)!
+    let url = URL(string: "oauth/token", relativeTo: Constants.url)!
 
     let parameters = [
       "grant_type": "authorization_code",
       "code_verifier": verifier,
-      "client_id": clientId,
+      "client_id": Constants.clientId,
       "code": authorizationCode,
-      "redirect_uri": redirectUri.absoluteString,
+      "redirect_uri": Constants.redirectUri.absoluteString,
     ]
 
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-
-    let task = URLSession.shared.dataTask(with: request) { data, response, error in
-      if let error = error {
-        completion(.failure(error))
-        return
-      }
-
-      guard let data = data else {
-        completion(.failure(LoginError.invalidData))
-        return
-      }
-
-      do {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let tokenResponse = try decoder.decode(TokenResponse.self, from: data)
-        completion(.success(tokenResponse))
-      } catch {
-        completion(.failure(error))
-      }
-    }
-
-    task.resume()
+    
+    URLSession(configuration: URLSessionConfiguration.ephemeral).getAuthDataWith(request, completion: completion)
   }
 
   private static func getVerifier() -> String? {

@@ -9,28 +9,6 @@ import UIKit
 import Foundation
 
 @objc
-public final class CheckForUpdateParams: NSObject {
-
-  @objc
-  public init(
-    apiKey: String,
-    tagName: String? = nil,
-    requiresLogin: Bool = false,
-    connection: String? = nil)
-  {
-    self.apiKey = apiKey
-    self.tagName = tagName
-    self.requiresLogin = requiresLogin
-    self.connection = connection
-  }
-
-  public let apiKey: String
-  public let tagName: String?
-  public let requiresLogin: Bool
-  public let connection: String?
-}
-
-@objc
 public final class ETDistribution: NSObject {
   // MARK: - Public
   @objc(sharedInstance)
@@ -62,11 +40,11 @@ public final class ETDistribution: NSObject {
   ///     }
   /// }
   /// ```
-  public func checkForUpdate(
-    params: CheckForUpdateParams,
-    completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil)
-  {
-    checkRequest(params: params)
+  public func checkForUpdate(apiKey: String,
+                             tagName: String? = nil,
+                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+    let params = CheckForUpdateParams(apiKey: apiKey, tagName: tagName)
+    checkRequest(params: params, completion: completion)
   }
   
   /// Checks if there is an update available for the app, based on the provided `apiKey` and `tagName`with Objective-C compatibility.
@@ -79,7 +57,7 @@ public final class ETDistribution: NSObject {
   /// - Parameters:
   ///   - apiKey: A `String` API key used for authentication.
   ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
-  ///   - completion: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
+  ///   - onReleaseAvailable: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
   ///   there is no updated available. If the closure is not provided, the SDK will present an alert to the user prompting to install the release.
   ///   - onError: An optional closure that is called with an `Error` object if the update check fails. If no error occurs, this closure is not called.
   ///
@@ -92,6 +70,85 @@ public final class ETDistribution: NSObject {
   ///     print("Error checking for update: \(error)")
   /// })
   /// ```
+  @objc
+  public func checkForUpdate(apiKey: String,
+                             tagName: String?,
+                             onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
+                             onError: ((Error) -> Void)? = nil) {
+    let params = CheckForUpdateParams(apiKey: apiKey, tagName: tagName)
+    checkRequest(params: params) { result in
+      switch result {
+      case.success(let releaseInfo):
+        onReleaseAvailable?(releaseInfo)
+      case.failure(let error):
+        onError?(error)
+      }
+    }
+  }
+  
+  /// Checks if there is an update available for the app using a `CheckForUpdateParams` model for a more flexible configuration.
+  ///
+  /// This function performs an update check based on the provided `CheckForUpdateParams`, which includes essential data
+  /// such as the API key, optional tag, and settings for Auth0-based login. The function supports custom configurations
+  /// when user login is required through Auth0 for added security. If an update is found, the completion closure receives
+  /// `DistributionReleaseInfo`; if there is no update, it receives `nil`.
+  ///
+  /// - Parameters:
+  ///   - params: A `CheckForUpdateParams` instance containing required data for authentication and optional settings for Auth0 login.
+  ///   - completion: An optional closure called with the result of the update check. If no update is available,
+  ///                 `DistributionReleaseInfo` will be `nil`. If omitted, the SDK will prompt the user to install a new release if available.
+  ///
+  /// - Example:
+  /// ```
+  /// let params = CheckForUpdateParams(apiKey: "your_api_key", requiresLogin: true, connection: "auth0_connection_name")
+  /// checkForUpdate(params: params) { result in
+  ///     switch result {
+  ///     case .success(let releaseInfo):
+  ///         if let releaseInfo {
+  ///             print("Update available: \(releaseInfo)")
+  ///         } else {
+  ///             print("App is up-to-date")
+  ///         }
+  ///     case .failure(let error):
+  ///         print("Failed to check for updates: \(error)")
+  ///     }
+  /// }
+  /// ```
+  ///
+  /// - Note: This function supports advanced configurations, including Auth0-based login, by setting `requiresLogin` to `true` and
+  ///         providing the relevant `connection`. This allows the update check to authenticate users if required.
+  public func checkForUpdate(params: CheckForUpdateParams,
+                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+      checkRequest(params: params, completion: completion)
+  }
+  
+  /// Checks if there is an update available for the app, based on the provided `apiKey` and `tagName`with Objective-C compatibility.
+  ///
+  /// This function performs an update check based on the provided `CheckForUpdateParams`, which includes essential data
+  /// such as the API key, optional tag, and settings for Auth0-based login. The function supports custom configurations
+  /// when user login is required through Auth0 for added security. If an update is found, the completion closure receives
+  /// `DistributionReleaseInfo`; if there is no update, it receives `nil`.
+  /// This function is designed for compatibility with Objective-C.
+  ///
+  /// - Parameters:
+  ///   - params: A `CheckForUpdateParams` instance containing required data for authentication and optional settings for Auth0 login.
+  ///   - onReleaseAvailable: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
+  ///   there is no updated available. If the closure is not provided, the SDK will present an alert to the user prompting to install the release.
+  ///   - onError: An optional closure that is called with an `Error` object if the update check fails. If no error occurs, this closure is not called.
+  ///
+  ///
+  /// - Example:
+  /// ```
+  /// let params = CheckForUpdateParams(apiKey: "your_api_key", requiresLogin: true, connection: "auth0_connection_name")
+  /// checkForUpdate(params: params, onReleaseAvailable: { releaseInfo in
+  ///     print("Release info: \(releaseInfo)")
+  /// }, onError: { error in
+  ///     print("Error checking for update: \(error)")
+  /// })
+  /// ```
+  ///
+  /// - Note: This function supports advanced configurations, including Auth0-based login, by setting `requiresLogin` to `true` and
+  ///         providing the relevant `connection`. This allows the update check to authenticate users if required.
   @objc
   public func checkForUpdate(params: CheckForUpdateParams,
                              onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
@@ -137,11 +194,23 @@ public final class ETDistribution: NSObject {
     }
 
     if params.requiresLogin {
-      Auth.login(connection: params.connection) { _ in
-
+      Auth.getAccessToken(connection: params.connection) { [weak self] result in
+        switch result {
+        case .success(let accessToken):
+          self?.performRequest(params: params, accessToken: accessToken, completion: completion)
+        case .failure(let error):
+          completion?(.failure(error))
+        }
       }
+    } else {
+      performRequest(params: params, completion: completion)
     }
-
+#endif
+  }
+  
+  private func performRequest(params: CheckForUpdateParams,
+                              accessToken: String? = nil,
+                              completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }
@@ -161,6 +230,7 @@ public final class ETDistribution: NSObject {
     }
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
+    request.setValue(accessToken, forHTTPHeaderField: "X-Authorization")
     
     session.checkForUpdate(request) { [weak self] result in
       let mappedResult = result.map { $0.updateInfo }
@@ -170,7 +240,6 @@ public final class ETDistribution: NSObject {
         self?.handleResponse(response: response)
       }
     }
-#endif
   }
   
   private func handleResponse(response: DistributionReleaseInfo) {

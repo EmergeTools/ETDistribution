@@ -9,15 +9,40 @@ import Foundation
 
 enum RequestError: Error {
   case badRequest(String)
+  case invalidData
   case unknownError
 }
 
 extension URLSession {
   func checkForUpdate(_ request: URLRequest, completion: @escaping (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
-    self.perform(request, decode: DistributionUpdateCheckResponse.self, completion: completion)
+    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: false, completion: completion) { data in
+      let errorMessage = (
+        try? JSONDecoder().decode(
+          DistributionUpdateCheckErrorResponse.self,
+          from: data
+        ).message
+      ) ?? "Unknown error"
+      return RequestError.badRequest(errorMessage)
+    }
   }
   
-  private func perform<T: Decodable>(_ request: URLRequest, decode decodable: T.Type, completion: @escaping (Result<T, Error>) -> Void) {
+  func getAuthDataWith(_ request: URLRequest, completion: @escaping (Result<AuthCodeResponse, Error>) -> Void) {
+    self.perform(request, decode: AuthCodeResponse.self, useCamelCase: true, completion: completion) { data in
+      return RequestError.badRequest("")
+    }
+  }
+  
+  func refreshAccessToken(_ request: URLRequest, completion: @escaping (Result<AuthRefreshResponse, Error>) -> Void) {
+    self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: true, completion: completion) { data in
+      return RequestError.badRequest("")
+    }
+  }
+  
+  private func perform<T: Decodable>(_ request: URLRequest,
+                                     decode decodable: T.Type,
+                                     useCamelCase: Bool = true,
+                                     completion: @escaping (Result<T, Error>) -> Void,
+                                     decodeErrorData: ((Data) -> Error)?) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
       var result: Result<T, Error> = .failure(RequestError.unknownError)
       defer {
@@ -29,21 +54,19 @@ extension URLSession {
       }
       guard let httpResponse = response as? HTTPURLResponse,
             let data = data else {
+        completion(.failure(RequestError.invalidData))
         return
       }
       guard (200...299).contains(httpResponse.statusCode) else {
-        let errorMessage = (
-          try? JSONDecoder().decode(
-            DistributionUpdateCheckErrorResponse.self,
-            from: data
-          ).message
-        ) ?? "Unknown error"
-        result = .failure(RequestError.badRequest(errorMessage))
+        let error = decodeErrorData?(data) ?? RequestError.badRequest("Unknown error")
+        result = .failure(error)
         return
       }
       
       do {
-        result = .success(try JSONDecoder().decode(decodable, from: data))
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.keyDecodingStrategy = useCamelCase ? .useDefaultKeys : .convertFromSnakeCase
+        result = .success(try jsonDecoder.decode(decodable, from: data))
       } catch {
         result = .failure(error)
       }
