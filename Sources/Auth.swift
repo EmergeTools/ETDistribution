@@ -36,7 +36,6 @@ enum Auth {
           requestLogin(connection: connection, completion: completion)
         }
       }
-      completion(.success(refreshToken))
     } else {
       requestLogin(connection: connection, completion: completion)
     }
@@ -108,6 +107,7 @@ enum Auth {
     }
     entries["redirect_uri"] = Constants.redirectUri.absoluteString
     entries["state"] = generateDefaultState()
+    entries["audience"] = "https://auth0-jwt-authorizer"
     entries.forEach { items.append(URLQueryItem(name: $0, value: $1)) }
     components.queryItems = items
     components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
