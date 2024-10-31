@@ -21,8 +21,10 @@ struct UpdateUtil {
           guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
             return
           }
-          UIApplication.shared.open(url) { _ in
-            exit(0)
+          DispatchQueue.main.async {
+            UIApplication.shared.open(url) { _ in
+              exit(0)
+            }
           }
         } else {
           print("Already up to date")
@@ -43,8 +45,10 @@ struct UpdateUtil {
           guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
             return
           }
-          UIApplication.shared.open(url) { _ in
-            exit(0)
+          DispatchQueue.main.async {
+            UIApplication.shared.open(url) { _ in
+              exit(0)
+            }
           }
         } else {
           print("Already up to date")
