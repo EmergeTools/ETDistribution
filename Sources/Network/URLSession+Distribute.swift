@@ -15,7 +15,7 @@ enum RequestError: Error {
 
 extension URLSession {
   func checkForUpdate(_ request: URLRequest, completion: @escaping (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
-    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: false, completion: completion) { data in
+    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: true, completion: completion) { data in
       let errorMessage = (
         try? JSONDecoder().decode(
           DistributionUpdateCheckErrorResponse.self,
@@ -27,13 +27,13 @@ extension URLSession {
   }
   
   func getAuthDataWith(_ request: URLRequest, completion: @escaping (Result<AuthCodeResponse, Error>) -> Void) {
-    self.perform(request, decode: AuthCodeResponse.self, useCamelCase: true, completion: completion) { data in
+    self.perform(request, decode: AuthCodeResponse.self, useCamelCase: false, completion: completion) { data in
       return RequestError.badRequest("")
     }
   }
   
   func refreshAccessToken(_ request: URLRequest, completion: @escaping (Result<AuthRefreshResponse, Error>) -> Void) {
-    self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: true, completion: completion) { data in
+    self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: false, completion: completion) { data in
       return RequestError.badRequest("")
     }
   }
