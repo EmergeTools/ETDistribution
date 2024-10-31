@@ -14,20 +14,17 @@ public final class ETDistribution: NSObject {
   @objc(sharedInstance)
   public static let shared = ETDistribution()
 
-  /// Checks if there is an update available for the app, based on the provided `apiKey` and optional `tagName`.
+  /// Checks if there is an update available for the app, based on the provided `params`.
   ///
-  /// The `apiKey` is required to authenticate the request, and the `tagName` can optionally be
-  /// provided to differentiate if the same binary has been uploaded with multiple tags.
-  /// `tagName` is generally not needed, the SDK will identify the tag automatically.
   ///
   /// - Parameters:
-  ///   - apiKey: A `String` API key used for authentication.
-  ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
+  ///   - params: A `CheckForUpdateParams` object.
   ///   - completion: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil, there is no updated available. If the closure is not provided, the SDK will present an alert to the user prompting to install the release.
   ///
   /// - Example:
   /// ```
-  /// checkForUpdate(apiKey: "your_api_key", tagName: nil) { result in
+  /// let params = CheckForUpdateParams(apiKey: "your_api_key")
+  /// checkForUpdate(params: params) { result in
   ///     switch result {
   ///     case .success(let releaseInfo):
   ///       if let releaseInfo {
@@ -40,22 +37,17 @@ public final class ETDistribution: NSObject {
   ///     }
   /// }
   /// ```
-  public func checkForUpdate(apiKey: String,
-                             tagName: String? = nil,
+  public func checkForUpdate(params: CheckForUpdateParams,
                              completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
-    checkRequest(apiKey: apiKey, tagName: tagName, completion: completion)
+    checkRequest(params: params, completion: completion)
   }
   
-  /// Checks if there is an update available for the app, based on the provided `apiKey` and `tagName`with Objective-C compatibility.
+  /// Checks if there is an update available for the app, based on the provided `params` with Objective-C compatibility.
   ///
-  /// The `apiKey` is required to authenticate the request, and the `tagName` can optionally be
-  /// provided to differentiate if the same binary has been uploaded with multiple tags.
-  /// `tagName` is generally not needed, the SDK will identify the tag automatically.
   /// This function is designed for compatibility with Objective-C.
   ///
   /// - Parameters:
-  ///   - apiKey: A `String` API key used for authentication.
-  ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
+  ///   - params: A `CheckForUpdateParams` object.
   ///   - completion: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
   ///   there is no updated available. If the closure is not provided, the SDK will present an alert to the user prompting to install the release.
   ///   - onError: An optional closure that is called with an `Error` object if the update check fails. If no error occurs, this closure is not called.
@@ -63,18 +55,18 @@ public final class ETDistribution: NSObject {
   ///
   /// - Example:
   /// ```
-  /// checkForUpdate(apiKey: "your_api_key", tagName: nil, onReleaseAvailable: { releaseInfo in
+  /// let params = CheckForUpdateParams(apiKey: "your_api_key")
+  /// checkForUpdate(params: params, onReleaseAvailable: { releaseInfo in
   ///     print("Release info: \(releaseInfo)")
   /// }, onError: { error in
   ///     print("Error checking for update: \(error)")
   /// })
   /// ```
   @objc
-  public func checkForUpdate(apiKey: String,
-                             tagName: String?,
+  public func checkForUpdate(params: CheckForUpdateParams,
                              onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
                              onError: ((Error) -> Void)? = nil) {
-    checkRequest(apiKey: apiKey, tagName: tagName) { result in
+    checkRequest(params: params) { result in
       switch result {
       case.success(let releaseInfo):
         onReleaseAvailable?(releaseInfo)
@@ -103,8 +95,7 @@ public final class ETDistribution: NSObject {
     super.init()
   }
 
-  private func checkRequest(apiKey: String, 
-                            tagName: String?,
+  private func checkRequest(params: CheckForUpdateParams,
                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
 #if targetEnvironment(simulator)
     // Not checking for updates on the simulator
@@ -120,12 +111,12 @@ public final class ETDistribution: NSObject {
     }
     
     components.queryItems = [
-      URLQueryItem(name: "apiKey", value: apiKey),
+      URLQueryItem(name: "apiKey", value: params.apiKey),
       URLQueryItem(name: "binaryIdentifier", value: uuid),
       URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
       URLQueryItem(name: "platform", value: "ios")
     ]
-    if let tagName = tagName {
+    if let tagName = params.tagName {
       components.queryItems?.append(URLQueryItem(name: "tag", value: tagName))
     }
     
