@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface UpdateUtilObjc : NSObject
 - (void) checkForUpdates;
+- (void) checkForUpdatesWithLogin;
 @end
 
 NS_ASSUME_NONNULL_END
