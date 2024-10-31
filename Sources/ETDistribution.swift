@@ -230,7 +230,9 @@ public final class ETDistribution: NSObject {
     }
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
-    request.setValue(accessToken, forHTTPHeaderField: "X-Authorization")
+    if accessToken != nil {
+      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
     
     session.checkForUpdate(request) { [weak self] result in
       let mappedResult = result.map { $0.updateInfo }
