@@ -13,7 +13,7 @@ import ETDistribution
 
 struct UpdateUtil {
   static func checkForUpdates() {
-    ETDistribution.shared.checkForUpdate(apiKey: Constants.apiKey) { result in
+    ETDistribution.shared.checkForUpdate(params: CheckForUpdateParams(apiKey: Constants.apiKey)) { result in
         switch result {
         case .success(let releaseInfo):
             if let releaseInfo {

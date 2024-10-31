@@ -13,8 +13,8 @@
 
 @implementation UpdateUtilObjc
 - (void) checkForUpdates {
-  [[ETDistribution sharedInstance] checkForUpdateWithApiKey:[Constants apiKey]
-                                                    tagName:[Constants tagName]
+  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey] tagName:[Constants tagName] requiresLogin:NO];
+  [[ETDistribution sharedInstance] checkForUpdateWithParams:params
                                          onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
     NSLog(@"Release info: %@", releaseInfo);
   }
