@@ -22,4 +22,15 @@
     NSLog(@"Error checking for update: %@", error);
   }];
 }
+
+- (void) checkForUpdatesWithLogin {
+  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey] tagName:[Constants tagName] requiresLogin:YES];
+  [[ETDistribution sharedInstance] checkForUpdateWithParams:params
+                                         onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
+    NSLog(@"Release info: %@", releaseInfo);
+  }
+                                                    onError:^(NSError *error) {
+    NSLog(@"Error checking for update: %@", error);
+  }];
+}
 @end

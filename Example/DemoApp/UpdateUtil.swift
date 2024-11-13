@@ -14,22 +14,48 @@ import ETDistribution
 struct UpdateUtil {
   static func checkForUpdates() {
     ETDistribution.shared.checkForUpdate(params: CheckForUpdateParams(apiKey: Constants.apiKey)) { result in
-        switch result {
-        case .success(let releaseInfo):
-            if let releaseInfo {
-                print("Update found: \(releaseInfo)")
-                guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
-                  return
-                }
-                UIApplication.shared.open(url) { _ in
-                  exit(0)
-                }
-            } else {
-                print("Already up to date")
+      switch result {
+      case .success(let releaseInfo):
+        if let releaseInfo {
+          print("Update found: \(releaseInfo)")
+          guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
+            return
+          }
+          DispatchQueue.main.async {
+            UIApplication.shared.open(url) { _ in
+              exit(0)
             }
-        case .failure(let error):
-            print("Error checking for update: \(error)")
+          }
+        } else {
+          print("Already up to date")
         }
+      case .failure(let error):
+        print("Error checking for update: \(error)")
+      }
+    }
+  }
+  
+  static func checkForUpdatesWithLogin() {
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true)
+    ETDistribution.shared.checkForUpdate(params: params) { result in
+      switch result {
+      case .success(let releaseInfo):
+        if let releaseInfo {
+          print("Update found: \(releaseInfo)")
+          guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
+            return
+          }
+          DispatchQueue.main.async {
+            UIApplication.shared.open(url) { _ in
+              exit(0)
+            }
+          }
+        } else {
+          print("Already up to date")
+        }
+      case .failure(let error):
+        print("Error checking for update: \(error)")
+      }
     }
   }
 }

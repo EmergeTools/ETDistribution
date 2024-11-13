@@ -48,7 +48,7 @@ public final class ETDistribution: NSObject {
   ///
   /// - Parameters:
   ///   - params: A `CheckForUpdateParams` object.
-  ///   - completion: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
+  ///   - onReleaseAvailable: An optional closure that is called with the result of the update check. If `DistributionReleaseInfo` is nil,
   ///   there is no updated available. If the closure is not provided, the SDK will present an alert to the user prompting to install the release.
   ///   - onError: An optional closure that is called with an `Error` object if the update check fails. If no error occurs, this closure is not called.
   ///
@@ -105,7 +105,25 @@ public final class ETDistribution: NSObject {
       // Not checking for updates when the debugger is attached
       return
     }
-    
+
+    if let loginSettings = params.loginSetting {
+      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
+        switch result {
+        case .success(let accessToken):
+          self?.performRequest(params: params, accessToken: accessToken, completion: completion)
+        case .failure(let error):
+          completion?(.failure(error))
+        }
+      }
+    } else {
+      performRequest(params: params, completion: completion)
+    }
+#endif
+  }
+  
+  private func performRequest(params: CheckForUpdateParams,
+                              accessToken: String? = nil,
+                              completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }
@@ -125,6 +143,9 @@ public final class ETDistribution: NSObject {
     }
     var request = URLRequest(url: url)
     request.httpMethod = "GET"
+    if let accessToken = accessToken {
+      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
     
     session.checkForUpdate(request) { [weak self] result in
       let mappedResult = result.map { $0.updateInfo }
@@ -134,7 +155,6 @@ public final class ETDistribution: NSObject {
         self?.handleResponse(response: response)
       }
     }
-#endif
   }
   
   private func handleResponse(response: DistributionReleaseInfo) {
@@ -196,4 +216,3 @@ public final class ETDistribution: NSObject {
     UserDefaults.postponeTimeout = Date(timeIntervalSinceNow: 60 * 60 * 24)
   }
 }
-
