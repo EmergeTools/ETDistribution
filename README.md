@@ -49,8 +49,10 @@ ETDistribution.shared.checkForUpdate(apiKey: "YOUR_API_KEY") { result in
             guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
               return
             }
-            UIApplication.shared.open(url) { _ in
-              exit(0)
+            DispatchQueue.main.async {
+              UIApplication.shared.open(url) { _ in
+                exit(0)
+              }
             }
         } else {
             print("Already up to date")

@@ -24,20 +24,33 @@ enum Auth {
   }
   
   static func getAccessToken(settings: CheckForUpdateParams.LoginSetting, completion: @escaping (Result<String, Error>) -> Void) {
-    if let token = KeychainHelper.getToken(key: Constants.accessTokenKey),
-       JWTHelper.isValid(token: token) {
-      completion(.success(token))
-    } else if let refreshToken = KeychainHelper.getToken(key: Constants.refreshTokenKey) {
-      refreshAccessToken(refreshToken) { result in
-        switch result {
-        case .success(let accessToken):
-          completion(.success(accessToken))
-        case .failure(let error):
-          requestLogin(settings, completion)
+    KeychainHelper.getToken(key: Constants.accessTokenKey) { token in
+      if let token = token,
+         JWTHelper.isValid(token: token) {
+        DispatchQueue.main.async {
+          completion(.success(token))
+        }
+      } else {
+        KeychainHelper.getToken(key: Constants.accessTokenKey) { refreshToken in
+          if let refreshToken = refreshToken,
+             JWTHelper.isValid(token: refreshToken) {
+            refreshAccessToken(refreshToken) { result in
+              DispatchQueue.main.async {
+                switch result {
+                case .success(let accessToken):
+                  completion(.success(accessToken))
+                case .failure(let error):
+                  requestLogin(settings, completion)
+                }
+              }
+            }
+          } else {
+            DispatchQueue.main.async {
+              requestLogin(settings, completion)
+            }
+          }
         }
       }
-    } else {
-      requestLogin(settings, completion)
     }
   }
   
@@ -45,12 +58,20 @@ enum Auth {
     login(settings: settings) { result in
       switch result {
       case .success(let response):
-        do {
-          try KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey)
-          try KeychainHelper.setToken(response.refreshToken, key: Constants.refreshTokenKey)
-          completion(.success(response.accessToken))
-        } catch {
-          completion(.failure(error))
+        KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey) { error in
+          if let error = error {
+            completion(.failure(error))
+            return
+          }
+          
+          KeychainHelper.setToken(response.refreshToken, key: Constants.refreshTokenKey) { error in
+            if let error = error {
+              completion(.failure(error))
+              return
+            }
+            
+            completion(.success(response.accessToken))
+          }
         }
       case .failure(let error):
         completion(.failure(error))
@@ -75,11 +96,12 @@ enum Auth {
     URLSession(configuration: URLSessionConfiguration.ephemeral).refreshAccessToken(request) { result in
       switch result {
       case .success(let response):
-        do {
-          try KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey)
+        KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey) { error in
+          if let error = error {
+            completion(.failure(error))
+            return
+          }
           completion(.success(response.accessToken))
-        } catch {
-          completion(.failure(error))
         }
       case .failure(let error):
         completion(.failure(error))
