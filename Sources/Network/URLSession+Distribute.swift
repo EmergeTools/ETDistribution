@@ -10,6 +10,7 @@ import Foundation
 enum RequestError: Error {
   case badRequest(String)
   case invalidData
+  case loginRequired
   case unknownError
 }
 
@@ -22,6 +23,9 @@ extension URLSession {
           from: data
         ).message
       ) ?? "Unknown error"
+      if errorMessage == "Login required" {
+        return RequestError.loginRequired
+      }
       return RequestError.badRequest(errorMessage)
     }
   }

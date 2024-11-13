@@ -116,7 +116,15 @@ public final class ETDistribution: NSObject {
         }
       }
     } else {
-      performRequest(params: params, completion: completion)
+      performRequest(params: params, accessToken: nil) { [weak self] result in
+        if case .failure(let error) = result,
+           case RequestError.loginRequired = error {
+          // Attempt login if backend returns "Login Required"
+          let params = CheckForUpdateParams(apiKey: params.apiKey, tagName: params.tagName, requiresLogin: true)
+          self?.checkRequest(params: params, completion: completion)
+        }
+        completion?(result)
+      }
     }
 #endif
   }
