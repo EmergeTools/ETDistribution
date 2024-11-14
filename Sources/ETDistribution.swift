@@ -122,6 +122,7 @@ public final class ETDistribution: NSObject {
           // Attempt login if backend returns "Login Required"
           let params = CheckForUpdateParams(apiKey: params.apiKey, tagName: params.tagName, requiresLogin: true)
           self?.checkRequest(params: params, completion: completion)
+          return
         }
         completion?(result)
       }
