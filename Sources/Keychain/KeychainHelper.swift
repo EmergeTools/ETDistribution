@@ -14,31 +14,45 @@ enum KeychainError: LocalizedError {
 enum KeychainHelper {
   static let service = "com.emerge.ETDistribution"
   
-  static func setToken(_ token: String, key: String) throws {
-    let existingToken = try getToken(key: key)
-    if existingToken == nil {
-      try addToken(token, key: key)
-    } else {
-      try updateToken(token, key: key)
+  static func setToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
+    getToken(key: key) { existingToken in
+      // This is executed in a background thread
+      do {
+        if existingToken == nil {
+          try addToken(token, key: key)
+        } else {
+          try updateToken(token, key: key)
+        }
+        completion(nil)
+      } catch {
+        completion(error)
+      }
     }
   }
   
-  static func getToken(key: String) -> String? {
-    let query = [
+  static func getToken(key: String, completion: @escaping (String?) -> Void) {
+    DispatchQueue.global(qos: .userInitiated).async {
+      let query = [
         kSecClass: kSecClassGenericPassword,
         kSecAttrService: service,
         kSecAttrAccount: key,
         kSecMatchLimit: kSecMatchLimitOne,
         kSecReturnData: true
-    ] as CFDictionary
+      ] as CFDictionary
 
-    var result: AnyObject?
-    let status = SecItemCopyMatching(query, &result)
+      var result: AnyObject?
+      let status = SecItemCopyMatching(query, &result)
 
-    guard status == errSecSuccess else {
-      return nil
+      let token: String? = {
+        guard status == errSecSuccess,
+                let data = result as? Data else {
+          return nil
+        }
+        return dataToToken(data)
+      }()
+
+      completion(token)
     }
-    return dataToToken(result as! Data)
   }
   
   private static func addToken(_ token: String, key: String) throws {

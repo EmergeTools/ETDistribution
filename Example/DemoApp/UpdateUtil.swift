@@ -58,4 +58,26 @@ struct UpdateUtil {
       }
     }
   }
+  
+  static func clearTokens() {
+    delete(key: "accessToken") {
+      delete(key: "refreshToken") {
+        print("Tokens cleared")
+      }
+    }
+  }
+  
+  private static func delete(key: String, completion: @escaping () -> Void) {
+    DispatchQueue.global().async {
+      let attributes = [
+        kSecClass: kSecClassGenericPassword,
+        kSecAttrService: "com.emerge.ETDistribution",
+        kSecAttrAccount: key,
+      ] as CFDictionary
+
+      SecItemDelete(attributes)
+      
+      completion()
+    }
+  }
 }
