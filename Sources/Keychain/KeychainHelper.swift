@@ -17,10 +17,15 @@ enum KeychainHelper {
   static func setToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
     getToken(key: key) { existingToken in
       // This is executed in a background thread
-      if existingToken == nil {
-        addToken(token, key: key, completion: completion)
-      } else {
-        updateToken(token, key: key, completion: completion)
+      do {
+        if existingToken == nil {
+          try addToken(token, key: key)
+        } else {
+          try updateToken(token, key: key)
+        }
+        completion(nil)
+      } catch {
+        completion(error)
       }
     }
   }
@@ -50,7 +55,7 @@ enum KeychainHelper {
     }
   }
   
-  private static func addToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
+  private static func addToken(_ token: String, key: String) throws {
     let data = tokenToData(token)
     
     let attributes = [
@@ -62,13 +67,11 @@ enum KeychainHelper {
 
     let status = SecItemAdd(attributes, nil)
     guard status == errSecSuccess else {
-      completion(KeychainError.unexpectedStatus(status))
-      return
+      throw KeychainError.unexpectedStatus(status)
     }
-    completion(nil)
   }
   
-  private static func updateToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
+  private static func updateToken(_ token: String, key: String) throws {
     let data = tokenToData(token)
     let query = [
       kSecClass: kSecClassGenericPassword,
@@ -82,10 +85,8 @@ enum KeychainHelper {
 
     let status = SecItemUpdate(query, attributes)
     guard status == errSecSuccess else {
-      completion(KeychainError.unexpectedStatus(status))
-      return
+      throw KeychainError.unexpectedStatus(status)
     }
-    completion(nil)
   }
   
   private static func tokenToData(_ token: String) -> Data {

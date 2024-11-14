@@ -41,6 +41,14 @@ struct ContentView: View {
       .background(.yellow)
       .foregroundColor(.black)
       .cornerRadius(10)
+      
+      Button("Clear Tokens") {
+        UpdateUtil.clearTokens()
+      }
+      .padding()
+      .background(.mint)
+      .foregroundColor(.black)
+      .cornerRadius(10)
     }
     .padding()
   }
