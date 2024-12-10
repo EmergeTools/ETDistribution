@@ -173,8 +173,8 @@ public final class ETDistribution: NSObject {
     
     components.queryItems = [
       URLQueryItem(name: "apiKey", value: params.apiKey),
-      URLQueryItem(name: "binaryIdentifier", value: binaryIdentifier),
-      URLQueryItem(name: "appId", value: appId),
+      URLQueryItem(name: "binaryIdentifier", value: uuid),
+      URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
       URLQueryItem(name: "platform", value: "ios")
     ]
     if let tagName = params.tagName {
