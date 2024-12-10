@@ -16,17 +16,8 @@ enum RequestError: Error {
 
 extension URLSession {
   func checkForUpdate(_ request: URLRequest, completion: @escaping (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
-    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: true, completion: completion) { data, statusCode in
-      let errorMessage = (
-        try? JSONDecoder().decode(
-          DistributionUpdateCheckErrorResponse.self,
-          from: data
-        ).message
-      ) ?? "Unknown error"
-      if statusCode == 403 {
-        return RequestError.loginRequired
-      }
-      return RequestError.badRequest(errorMessage)
+    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
+      return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
     }
   }
   
@@ -39,6 +30,12 @@ extension URLSession {
   func refreshAccessToken(_ request: URLRequest, completion: @escaping (Result<AuthRefreshResponse, Error>) -> Void) {
     self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: false, completion: completion) { _, _ in
       return RequestError.badRequest("")
+    }
+  }
+  
+  func getReleaseInfo(_ request: URLRequest, completion: @escaping (Result<DistributionReleaseInfo, Error>) -> Void) {
+    self.perform(request, decode: DistributionReleaseInfo.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
+      return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
     }
   }
   
@@ -75,5 +72,18 @@ extension URLSession {
         result = .failure(error)
       }
     }.resume()
+  }
+  
+  private func getErrorFrom(data: Data, statusCode: Int) -> RequestError {
+    let errorMessage = (
+      try? JSONDecoder().decode(
+        DistributionUpdateCheckErrorResponse.self,
+        from: data
+      ).message
+    ) ?? "Unknown error"
+    if statusCode == 403 {
+      return RequestError.loginRequired
+    }
+    return RequestError.badRequest(errorMessage)
   }
 }

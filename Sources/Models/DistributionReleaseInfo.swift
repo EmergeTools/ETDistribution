@@ -14,4 +14,5 @@ public final class DistributionReleaseInfo: NSObject, Decodable {
   public let version: String
   public let appId: String
   public let downloadUrl: String
+  public let loginRequiredForDownload: Bool
 }
