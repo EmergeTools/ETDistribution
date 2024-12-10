@@ -203,7 +203,7 @@ public final class ETDistribution: NSObject {
   private func getReleaseInfo(releaseId: String,
                               accessToken: String? = nil,
                               completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
-    guard var components = URLComponents(string: "http://localhost:4000/distribution/getRelease") else {
+    guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
       fatalError("Invalid URL")
     }
     
