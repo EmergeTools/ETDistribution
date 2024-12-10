@@ -77,7 +77,8 @@ public final class ETDistribution: NSObject {
   }
 
   public func buildUrlForInstall(_ plistUrl: String) -> URL? {
-    guard var components = URLComponents(string: "itms-services://") else {
+    guard plistUrl != "REQUIRES_LOGIN",
+      var components = URLComponents(string: "itms-services://") else {
       return nil
     }
     components.queryItems = [
@@ -86,10 +87,39 @@ public final class ETDistribution: NSObject {
     ]
     return components.url
   }
+  
+  public func getReleaseInfo(releaseId: String, completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
+    if let loginSettings = loginSettings,
+       (loginLevel?.rawValue ?? 0) > LoginLevel.none.rawValue {
+      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
+        switch result {
+        case .success(let accessToken):
+          self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
+        case .failure(let error):
+          completion(.failure(error))
+        }
+      }
+    } else {
+      getReleaseInfo(releaseId: releaseId, accessToken: nil) { [weak self] result in
+        if case .failure(let error) = result,
+           case RequestError.loginRequired = error {
+          // Attempt login if backend returns "Login Required"
+          self?.loginSettings = LoginSetting.default
+          self?.loginLevel = .onlyForDownload
+          self?.getReleaseInfo(releaseId: releaseId, completion: completion)
+          return
+        }
+        completion(result)
+      }
+    }
+  }
 
   // MARK: - Private
   private lazy var session = URLSession(configuration: URLSessionConfiguration.ephemeral)
   private lazy var uuid = BinaryParser.getMainBinaryUUID()
+  private var loginSettings: LoginSetting?
+  private var loginLevel: LoginLevel?
+  private var apiKey: String = ""
 
   override private init() {
     super.init()
@@ -105,18 +135,22 @@ public final class ETDistribution: NSObject {
       // Not checking for updates when the debugger is attached
       return
     }
+    apiKey = params.apiKey
+    loginLevel = params.loginLevel
+    loginSettings = params.loginSetting
 
-    if let loginSettings = params.loginSetting {
+    if let loginSettings = params.loginSetting,
+       params.loginLevel == .everything {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          self?.performRequest(params: params, accessToken: accessToken, completion: completion)
+          self?.getUpdatesFromBackend(params: params, accessToken: accessToken, completion: completion)
         case .failure(let error):
           completion?(.failure(error))
         }
       }
     } else {
-      performRequest(params: params, accessToken: nil) { [weak self] result in
+      getUpdatesFromBackend(params: params, accessToken: nil) { [weak self] result in
         if case .failure(let error) = result,
            case RequestError.loginRequired = error {
           // Attempt login if backend returns "Login Required"
@@ -130,7 +164,7 @@ public final class ETDistribution: NSObject {
 #endif
   }
   
-  private func performRequest(params: CheckForUpdateParams,
+  private func getUpdatesFromBackend(params: CheckForUpdateParams,
                               accessToken: String? = nil,
                               completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
@@ -164,6 +198,31 @@ public final class ETDistribution: NSObject {
         self?.handleResponse(response: response)
       }
     }
+  }
+  
+  private func getReleaseInfo(releaseId: String,
+                              accessToken: String? = nil,
+                              completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
+    guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
+      fatalError("Invalid URL")
+    }
+    
+    components.queryItems = [
+      URLQueryItem(name: "apiKey", value: apiKey),
+      URLQueryItem(name: "uploadId", value: releaseId),
+      URLQueryItem(name: "platform", value: "ios")
+    ]
+    
+    guard let url = components.url else {
+      fatalError("Invalid URL")
+    }
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    if let accessToken = accessToken {
+      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
+    
+    session.getReleaseInfo(request, completion: completion)
   }
   
   private func handleResponse(response: DistributionReleaseInfo) {
@@ -208,7 +267,25 @@ public final class ETDistribution: NSObject {
   }
   
   private func handleInstallRelease(_ release: DistributionReleaseInfo) {
-    guard let url = self.buildUrlForInstall(release.downloadUrl) else {
+    if release.loginRequiredForDownload, let loginSettings = loginSettings {
+      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
+        guard case let .success(accessToken) = result else {
+          return
+        }
+        self?.getReleaseInfo(releaseId: release.id, accessToken: accessToken) { [weak self] result in
+          guard case .success(let release) = result else {
+            return
+          }
+          self?.installAppWithDownloadString(release.downloadUrl)
+        }
+      }
+    } else {
+      installAppWithDownloadString(release.downloadUrl)
+    }
+  }
+  
+  private func installAppWithDownloadString(_ urlString: String) {
+    guard let url = self.buildUrlForInstall(urlString) else {
       return
     }
     UIApplication.shared.open(url) { _ in

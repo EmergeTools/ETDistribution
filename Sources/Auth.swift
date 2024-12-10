@@ -23,7 +23,7 @@ enum Auth {
     static let refreshTokenKey = "refreshToken"
   }
   
-  static func getAccessToken(settings: CheckForUpdateParams.LoginSetting, completion: @escaping (Result<String, Error>) -> Void) {
+  static func getAccessToken(settings: LoginSetting, completion: @escaping (Result<String, Error>) -> Void) {
     KeychainHelper.getToken(key: Constants.accessTokenKey) { token in
       if let token = token,
          JWTHelper.isValid(token: token) {
@@ -54,7 +54,7 @@ enum Auth {
     }
   }
   
-  private static func requestLogin(_ settings: CheckForUpdateParams.LoginSetting, _ completion: @escaping (Result<String, Error>) -> Void) {
+  private static func requestLogin(_ settings: LoginSetting, _ completion: @escaping (Result<String, Error>) -> Void) {
     login(settings: settings) { result in
       switch result {
       case .success(let response):
@@ -110,7 +110,7 @@ enum Auth {
   }
 
   private static func login(
-    settings: CheckForUpdateParams.LoginSetting,
+    settings: LoginSetting,
     completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
   {
     let verifier = getVerifier()!

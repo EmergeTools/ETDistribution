@@ -14,23 +14,28 @@ import ETDistribution
 struct UpdateUtil {
   static func checkForUpdates() {
     ETDistribution.shared.checkForUpdate(params: CheckForUpdateParams(apiKey: Constants.apiKey)) { result in
-      switch result {
-      case .success(let releaseInfo):
-        if let releaseInfo {
-          print("Update found: \(releaseInfo)")
-          guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
-            return
-          }
-          DispatchQueue.main.async {
-            UIApplication.shared.open(url) { _ in
-              exit(0)
-            }
-          }
-        } else {
-          print("Already up to date")
+      guard case let .success(releaseInfo) = result else {
+        if case let .failure(error) = result {
+          print("Error checking for update: \(error)")
         }
-      case .failure(let error):
-        print("Error checking for update: \(error)")
+        return
+      }
+      
+      guard let releaseInfo = releaseInfo else {
+        print("Already up to date")
+        return
+      }
+      
+      print("Update found: \(releaseInfo), requires login: \(releaseInfo.loginRequiredForDownload)")
+      if releaseInfo.loginRequiredForDownload {
+        // Get new release info, with login
+        ETDistribution.shared.getReleaseInfo(releaseId: releaseInfo.id) { newReleaseInfo in
+          if case let .success(newReleaseInfo) = newReleaseInfo {
+            UpdateUtil.installRelease(releaseInfo: newReleaseInfo)
+          }
+        }
+      } else {
+        UpdateUtil.installRelease(releaseInfo: releaseInfo)
       }
     }
   }
@@ -38,23 +43,28 @@ struct UpdateUtil {
   static func checkForUpdatesWithLogin() {
     let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true)
     ETDistribution.shared.checkForUpdate(params: params) { result in
-      switch result {
-      case .success(let releaseInfo):
-        if let releaseInfo {
-          print("Update found: \(releaseInfo)")
-          guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
-            return
-          }
-          DispatchQueue.main.async {
-            UIApplication.shared.open(url) { _ in
-              exit(0)
-            }
-          }
-        } else {
-          print("Already up to date")
+      guard case let .success(releaseInfo) = result else {
+        if case let .failure(error) = result {
+          print("Error checking for update: \(error)")
         }
-      case .failure(let error):
-        print("Error checking for update: \(error)")
+        return
+      }
+      
+      guard let releaseInfo = releaseInfo else {
+        print("Already up to date")
+        return
+      }
+      
+      print("Update found: \(releaseInfo), requires login: \(releaseInfo.loginRequiredForDownload)")
+      if releaseInfo.loginRequiredForDownload {
+        // Get new release info, with login
+        ETDistribution.shared.getReleaseInfo(releaseId: releaseInfo.id) { newReleaseInfo in
+          if case let .success(newReleaseInfo) = newReleaseInfo {
+            UpdateUtil.installRelease(releaseInfo: newReleaseInfo)
+          }
+        }
+      } else {
+        UpdateUtil.installRelease(releaseInfo: releaseInfo)
       }
     }
   }
@@ -78,6 +88,17 @@ struct UpdateUtil {
       SecItemDelete(attributes)
       
       completion()
+    }
+  }
+  
+  private static func installRelease(releaseInfo: DistributionReleaseInfo) {
+    guard let url = ETDistribution.shared.buildUrlForInstall(releaseInfo.downloadUrl) else {
+      return
+    }
+    DispatchQueue.main.async {
+      UIApplication.shared.open(url) { _ in
+        exit(0)
+      }
     }
   }
 }
