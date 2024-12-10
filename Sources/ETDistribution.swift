@@ -77,7 +77,8 @@ public final class ETDistribution: NSObject {
   }
 
   public func buildUrlForInstall(_ plistUrl: String) -> URL? {
-    guard var components = URLComponents(string: "itms-services://") else {
+    guard plistUrl != "REQUIRES_LOGIN",
+      var components = URLComponents(string: "itms-services://") else {
       return nil
     }
     components.queryItems = [
