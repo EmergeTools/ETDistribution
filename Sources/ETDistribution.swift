@@ -117,6 +117,9 @@ public final class ETDistribution: NSObject {
   // MARK: - Private
   private lazy var session = URLSession(configuration: URLSessionConfiguration.ephemeral)
   private lazy var uuid = BinaryParser.getMainBinaryUUID()
+  private var loginSettings: LoginSetting?
+  private var loginLevel: LoginLevel?
+  private var apiKey: String = ""
 
   override private init() {
     super.init()
@@ -132,18 +135,22 @@ public final class ETDistribution: NSObject {
       // Not checking for updates when the debugger is attached
       return
     }
+    apiKey = params.apiKey
+    loginLevel = params.loginLevel
+    loginSettings = params.loginSetting
 
-    if let loginSettings = params.loginSetting {
+    if let loginSettings = params.loginSetting,
+       params.loginLevel == .everything {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          self?.performRequest(params: params, accessToken: accessToken, completion: completion)
+          self?.getUpdatesFromBackend(params: params, accessToken: accessToken, completion: completion)
         case .failure(let error):
           completion?(.failure(error))
         }
       }
     } else {
-      performRequest(params: params, accessToken: nil) { [weak self] result in
+      getUpdatesFromBackend(params: params, accessToken: nil) { [weak self] result in
         if case .failure(let error) = result,
            case RequestError.loginRequired = error {
           // Attempt login if backend returns "Login Required"
@@ -157,7 +164,7 @@ public final class ETDistribution: NSObject {
 #endif
   }
   
-  private func performRequest(params: CheckForUpdateParams,
+  private func getUpdatesFromBackend(params: CheckForUpdateParams,
                               accessToken: String? = nil,
                               completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
@@ -166,8 +173,8 @@ public final class ETDistribution: NSObject {
     
     components.queryItems = [
       URLQueryItem(name: "apiKey", value: params.apiKey),
-      URLQueryItem(name: "binaryIdentifier", value: uuid),
-      URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
+      URLQueryItem(name: "binaryIdentifier", value: binaryIdentifier),
+      URLQueryItem(name: "appId", value: appId),
       URLQueryItem(name: "platform", value: "ios")
     ]
     if let tagName = params.tagName {
