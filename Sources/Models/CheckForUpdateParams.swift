@@ -7,6 +7,25 @@
 
 import Foundation
 
+/// Type of authenticated access to required. The default case shows the Emerge Tools login page.
+/// A custom connection can be used to automatically redirect to an SSO page.
+public enum LoginSetting {
+  case `default`
+  case connection(String)
+}
+
+/// Level of login required. By default no login is required
+/// Available levels:
+///   - none: No login is requiried
+///   - onlyForDownload: login is required only when downloading the app
+///   - everything: login is always required when doing API calls.
+@objc
+public enum LoginLevel: Int {
+  case none
+  case onlyForDownload
+  case everything
+}
+
 /// A model for configuring parameters needed to check for app updates.
 ///
 /// Note: `tagName` is generally not needed, the SDK will identify the tag automatically.
@@ -26,6 +45,7 @@ public final class CheckForUpdateParams: NSObject {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = requiresLogin ? .default : nil
+    self.loginLevel = requiresLogin ? .everything : .none
   }
 
   /// Create a new CheckForUpdateParams object with a connection name.
@@ -37,10 +57,12 @@ public final class CheckForUpdateParams: NSObject {
   @objc
   public init(apiKey: String,
               tagName: String? = nil,
-              connection: String) {
+              connection: String,
+              loginLevel: LoginLevel = .everything) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = .connection(connection)
+    self.loginLevel = loginLevel
   }
 
   /// Create a new CheckForUpdateParams object with a login setting.
@@ -51,20 +73,16 @@ public final class CheckForUpdateParams: NSObject {
   ///   - loginSetting: A `LoginSetting` to require authenticated access to updates.
   public init(apiKey: String,
               tagName: String? = nil,
-              loginSetting: LoginSetting) {
+              loginSetting: LoginSetting,
+              loginLevel: LoginLevel = .everything) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = loginSetting
-  }
-
-  /// Type of authenticated access to required. The default case shows the Emerge Tools login page.
-  /// A custom connection can be used to automatically redirect to an SSO page.
-  public enum LoginSetting {
-    case `default`
-    case connection(String)
+    self.loginLevel = loginLevel
   }
 
   let apiKey: String
   let tagName: String?
   let loginSetting: LoginSetting?
+  let loginLevel: LoginLevel?
 }
