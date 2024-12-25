@@ -104,6 +104,16 @@ For more detailed documentation and additional examples, visit our [Documentatio
 
 The library is designed to skip update checks on the simulator. To test update functionality, run your app on a physical device.
 
+### Why I am not getting any update?
+
+There could be several reasons:
+- Update checks are disabled for both Simulators and Debug builds.
+- ETDistribution is intended to update from an already published version on ETDistribution. If the current build has not been uploaded to Emerge Tools, you won't get any update notification.
+
 ### How do I skip an update?
 
 When handling the response you can check the release version field to decide if it should be installed or not.
+
+### Can I use ETDistribution to get updates from the AppStore?
+
+No, since the binary signer is different (builds installed from the AppStore are signed by Apple), the update will fail.
