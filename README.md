@@ -25,7 +25,7 @@ ETDistribution is a Swift library that simplifies the process of distributing ne
 To integrate ETDistribution into your project, add the following line to your Package.swift:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/EmergeTools/ETDistribution.git", from: "v0.1.0")
+    .package(url: "https://github.com/EmergeTools/ETDistribution.git", from: "v0.1.2")
 ]
 ```
 
