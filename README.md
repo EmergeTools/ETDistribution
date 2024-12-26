@@ -87,6 +87,10 @@ An API key is required to authenticate requests. You can obtain your API key fro
 
 Tags can be used to associate builds, you could use tags to represent the dev branch, an internal project or any team builds. If the same binary has been uploaded with multiple tags, you can specify a tagName to differentiate between them. This is usually not needed, as the SDK will identify the tag automatically.
 
+### Login Level
+
+Login levels can be configured to require login for certain actions (like downloading the update or checking for updates). They are set at [Emerge Tools Settings](https://www.emergetools.com/settings?tab=feature-configuration). You should match that level at the app level.
+
 ### Handling Responses
 
 By default, if no completion closure is provided, the SDK will present an alert to the user, prompting them to install the release. You can customize this behavior using the closures provided by the API.
@@ -117,3 +121,12 @@ When handling the response you can check the release version field to decide if 
 ### Can I use ETDistribution to get updates from the AppStore?
 
 No, since the binary signer is different (builds installed from the AppStore are signed by Apple), the update will fail.
+
+### Can I require login to get updates?
+
+Yes, there are 3 options for security:
+- No login required.
+- Login required only for downloading the update (can check for updates without login).
+- Login required for checking for updates.
+
+These options can be configured per platform at [Emerge Tools Settings](https://www.emergetools.com/settings?tab=feature-configuration).
