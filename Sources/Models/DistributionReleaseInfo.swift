@@ -12,6 +12,7 @@ public final class DistributionReleaseInfo: NSObject, Decodable {
   public let id: String
   public let tag: String
   public let version: String
+  public let build: String
   public let appId: String
   public let downloadUrl: String
   public let iconUrl: String?
