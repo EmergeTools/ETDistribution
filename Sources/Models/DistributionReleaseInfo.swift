@@ -17,7 +17,13 @@ public final class DistributionReleaseInfo: NSObject, Decodable {
   public let iconUrl: String?
   public let appName: String
   private let createdDate: String
+  private let currentReleaseDate: String
   public let loginRequiredForDownload: Bool
+
+  public var currentReleaseCreated: Date? {
+    let formatter = ISO8601DateFormatter()
+    return formatter.date(from: currentReleaseDate)
+  }
 
   public var created: Date? {
     let formatter = ISO8601DateFormatter()
