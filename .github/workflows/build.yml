@@ -16,6 +16,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Xcode select ${{ matrix.xcode-version }}
         run: sudo xcode-select -s '/Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer'
+      - name: Install iOS Platform (Temp fix while Github Actions fixes the image)
+        run: xcodebuild -downloadPlatform iOS
       - name: Build for iOS Simulator
         run: xcodebuild build -scheme ETDistribution -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
       - name: Build for iOS
