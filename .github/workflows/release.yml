@@ -16,13 +16,16 @@ jobs:
         uses: actions/checkout@v2
       - name: Xcode select ${{ matrix.xcode-version }}
         run: sudo xcode-select -s '/Applications/Xcode_${{ matrix.xcode-version }}.app/Contents/Developer'
-      - name: Build xcframework
-        run: sh build.sh
       - name: Get Swift Version
         run: |
           SWIFT_MAJOR_VERSION=$(swift --version 2>&1 | awk '/Apple Swift version/ { split($7, ver, "."); print ver[1]; exit }')
           echo "Swift major version: $SWIFT_MAJOR_VERSION"
           echo "SWIFT_MAJOR_VERSION=$SWIFT_MAJOR_VERSION" >> "$GITHUB_ENV"
+          echo "SWIFT_VERSION=$SWIFT_MAJOR_VERSION.0" >> "$GITHUB_ENV"
+      - name: Build xcframework
+        run: sh build.sh
+        env:
+          SWIFT_VERSION: ${{ env.SWIFT_VERSION }}
       - name: Zip xcframework
         run: zip -r ETDistribution_swift_${{ env.SWIFT_MAJOR_VERSION }}.xcframework.zip ETDistribution.xcframework
       - name: Upload Artifact
