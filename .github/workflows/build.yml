@@ -26,7 +26,4 @@ jobs:
       - name: Build for iOS
         run: xcodebuild build -scheme ETDistribution -sdk iphoneos -destination 'generic/platform=iOS'
       - name: Build TestApp
-        run: |
-          cd Example 
-          sed -i '' "s/SWIFT_VERSION = 5\.0;/SWIFT_VERSION = ${{ env.SWIFT_VERSION }};/g" DemoApp.xcodeproj/project.pbxproj
-          xcodebuild build -scheme DemoApp -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -project DemoApp.xcodeproj
+        run: cd Example && xcodebuild build -scheme DemoApp -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -project DemoApp.xcodeproj SWIFT_VERSION=${{ env.SWIFT_VERSION }}
