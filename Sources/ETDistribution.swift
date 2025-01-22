@@ -8,7 +8,7 @@
 import UIKit
 import Foundation
 
-@objc
+@objc @MainActor
 public final class ETDistribution: NSObject {
   // MARK: - Public
   @objc(sharedInstance)
@@ -38,7 +38,7 @@ public final class ETDistribution: NSObject {
   /// }
   /// ```
   public func checkForUpdate(params: CheckForUpdateParams,
-                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                             completion: (@Sendable (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     checkRequest(params: params, completion: completion)
   }
   
@@ -64,8 +64,8 @@ public final class ETDistribution: NSObject {
   /// ```
   @objc
   public func checkForUpdate(params: CheckForUpdateParams,
-                             onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
-                             onError: ((Error) -> Void)? = nil) {
+                             onReleaseAvailable: (@Sendable (DistributionReleaseInfo?) -> Void)? = nil,
+                             onError: (@Sendable (Error) -> Void)? = nil) {
     checkRequest(params: params) { result in
       switch result {
       case.success(let releaseInfo):
@@ -91,25 +91,30 @@ public final class ETDistribution: NSObject {
   public func getReleaseInfo(releaseId: String, completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
     if let loginSettings = loginSettings,
        (loginLevel?.rawValue ?? 0) > LoginLevel.none.rawValue {
-      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
-        switch result {
-        case .success(let accessToken):
-          self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
-        case .failure(let error):
+      Task {
+        do {
+          let accessToken = try await Auth.getAccessToken(settings: loginSettings)
+          let releaseInfo = try await getReleaseInfo(releaseId: releaseId, accessToken: accessToken)
+          completion(.success(releaseInfo))
+        } catch {
           completion(.failure(error))
         }
       }
     } else {
-      getReleaseInfo(releaseId: releaseId, accessToken: nil) { [weak self] result in
-        if case .failure(let error) = result,
-           case RequestError.loginRequired = error {
-          // Attempt login if backend returns "Login Required"
-          self?.loginSettings = LoginSetting.default
-          self?.loginLevel = .onlyForDownload
-          self?.getReleaseInfo(releaseId: releaseId, completion: completion)
-          return
+      Task {
+        do {
+          let release = try await getReleaseInfo(releaseId: releaseId)
+          completion(.success(release))
+        } catch {
+          if case RequestError.loginRequired = error {
+            // Attempt login if backend returns "Login Required"
+            self.loginSettings = LoginSetting.default
+            self.loginLevel = .onlyForDownload
+            self.getReleaseInfo(releaseId: releaseId, completion: completion)
+            return
+          }
+          completion(.failure(error))
         }
-        completion(result)
       }
     }
   }
@@ -126,7 +131,7 @@ public final class ETDistribution: NSObject {
   }
 
   private func checkRequest(params: CheckForUpdateParams,
-                            completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                            completion: (@Sendable (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
 #if targetEnvironment(simulator)
     // Not checking for updates on the simulator
     return
@@ -135,38 +140,51 @@ public final class ETDistribution: NSObject {
       // Not checking for updates when the debugger is attached
       return
     }
+    
     apiKey = params.apiKey
     loginLevel = params.loginLevel
     loginSettings = params.loginSetting
 
-    if let loginSettings = params.loginSetting,
-       params.loginLevel == .everything {
-      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
-        switch result {
-        case .success(let accessToken):
-          self?.getUpdatesFromBackend(params: params, accessToken: accessToken, completion: completion)
-        case .failure(let error):
-          completion?(.failure(error))
+      if let loginSettings = params.loginSetting,
+         params.loginLevel == .everything {
+        Task {
+          do {
+            let accessToken = try await Auth.getAccessToken(settings: loginSettings)
+            let update = try await getUpdatesFromBackend(params: params, accessToken: nil)
+            if let completion = completion {
+              completion(.success(update))
+            } else if let update {
+              handleResponse(response: update)
+            }
+          } catch {
+            completion?(.failure(error))
+          }
+        }
+      } else {
+        Task {
+          do {
+            let update = try await getUpdatesFromBackend(params: params, accessToken: nil)
+            if let completion = completion {
+              completion(.success(update))
+            } else if let update = update {
+              handleResponse(response: update)
+            }
+          } catch {
+            if case RequestError.loginRequired = error {
+              // Attempt login if backend returns "Login Required"
+              let params = CheckForUpdateParams(apiKey: params.apiKey, tagName: params.tagName, requiresLogin: true)
+              checkRequest(params: params, completion: completion)
+              return
+            }
+            completion?(.failure(error))
+          }
         }
       }
-    } else {
-      getUpdatesFromBackend(params: params, accessToken: nil) { [weak self] result in
-        if case .failure(let error) = result,
-           case RequestError.loginRequired = error {
-          // Attempt login if backend returns "Login Required"
-          let params = CheckForUpdateParams(apiKey: params.apiKey, tagName: params.tagName, requiresLogin: true)
-          self?.checkRequest(params: params, completion: completion)
-          return
-        }
-        completion?(result)
-      }
-    }
 #endif
   }
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
-                              accessToken: String? = nil,
-                              completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                              accessToken: String? = nil) async throws -> DistributionReleaseInfo? {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }
@@ -190,19 +208,12 @@ public final class ETDistribution: NSObject {
       request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
     }
     
-    session.checkForUpdate(request) { [weak self] result in
-      let mappedResult = result.map { $0.updateInfo }
-      if let completion = completion {
-        completion(mappedResult)
-      } else if let response = try? mappedResult.get() {
-        self?.handleResponse(response: response)
-      }
-    }
+    let result = try await session.checkForUpdate(request)
+    return result.updateInfo
   }
   
   private func getReleaseInfo(releaseId: String,
-                              accessToken: String? = nil,
-                              completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
+                              accessToken: String? = nil) async throws -> DistributionReleaseInfo {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
       fatalError("Invalid URL")
     }
@@ -222,7 +233,7 @@ public final class ETDistribution: NSObject {
       request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
     }
     
-    session.getReleaseInfo(request, completion: completion)
+    return try await session.getReleaseInfo(request)
   }
   
   private func handleResponse(response: DistributionReleaseInfo) {
@@ -236,25 +247,25 @@ public final class ETDistribution: NSObject {
     var actions = [AlertAction]()
     actions.append(AlertAction(title: "Install",
                                style: .default,
-                               handler: { [weak self] _ in
-      self?.handleInstallRelease(response)
+                               handler: { [unowned self] _ in
+      Task {
+        await self.handleInstallRelease(response)
+      }
     }))
     actions.append(AlertAction(title: "Postpone updates for 1 day",
                                style: .cancel,
-                               handler: { [weak self] _ in
-      self?.handlePostponeRelease()
+                               handler: { [unowned self] _ in
+      self.handlePostponeRelease()
     }))
     actions.append(AlertAction(title: "Skip",
                                style: .destructive,
-                               handler: { [weak self] _ in
-      self?.handleSkipRelease(response)
+                               handler: { [unowned self] _ in
+      self.handleSkipRelease(response)
     }))
     
-    DispatchQueue.main.async {
-      UIViewController.showAlert(title: "Update Available",
-                                 message: message,
-                                 actions: actions)
-    }
+    UIViewController.showAlert(title: "Update Available",
+                               message: message,
+                               actions: actions)
   }
   
   private func isDebuggerAttached() -> Bool {
@@ -266,22 +277,19 @@ public final class ETDistribution: NSObject {
     return (info.kp_proc.p_flag & P_TRACED) != 0
   }
   
-  private func handleInstallRelease(_ release: DistributionReleaseInfo) {
+  private func handleInstallRelease(_ release: DistributionReleaseInfo) async {
+    let downloadUrl = release.downloadUrl
     if release.loginRequiredForDownload, let loginSettings = loginSettings {
-      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
-        guard case let .success(accessToken) = result else {
-          return
-        }
-        self?.getReleaseInfo(releaseId: release.id, accessToken: accessToken) { [weak self] result in
-          guard case .success(let release) = result else {
-            return
-          }
-          self?.installAppWithDownloadString(release.downloadUrl)
-        }
+      let result = try? await Auth.getAccessToken(settings: loginSettings)
+      guard let accessToken = result else {
+        return
       }
-    } else {
-      installAppWithDownloadString(release.downloadUrl)
+      
+      guard let updatedRelease = try? await getReleaseInfo(releaseId: release.id) else {
+        return
+      }
     }
+    installAppWithDownloadString(downloadUrl)
   }
   
   private func installAppWithDownloadString(_ urlString: String) {

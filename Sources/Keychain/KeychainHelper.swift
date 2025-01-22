@@ -11,48 +11,37 @@ enum KeychainError: LocalizedError {
   case unexpectedStatus(OSStatus)
 }
 
-enum KeychainHelper {
+actor KeychainHelper {
   static let service = "com.emerge.ETDistribution"
   
-  static func setToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
-    getToken(key: key) { existingToken in
-      // This is executed in a background thread
-      do {
-        if existingToken == nil {
-          try addToken(token, key: key)
-        } else {
-          try updateToken(token, key: key)
-        }
-        completion(nil)
-      } catch {
-        completion(error)
-      }
+  static func setToken(_ token: String, key: String) async throws {
+    if let existingToken = try await getToken(key: key) {
+      try updateToken(token, key: key)
+    } else {
+      try addToken(token, key: key)
     }
   }
   
-  static func getToken(key: String, completion: @escaping (String?) -> Void) {
-    DispatchQueue.global(qos: .userInitiated).async {
-      let query = [
-        kSecClass: kSecClassGenericPassword,
-        kSecAttrService: service,
-        kSecAttrAccount: key,
-        kSecMatchLimit: kSecMatchLimitOne,
-        kSecReturnData: true
-      ] as CFDictionary
-
-      var result: AnyObject?
-      let status = SecItemCopyMatching(query, &result)
-
-      let token: String? = {
-        guard status == errSecSuccess,
-                let data = result as? Data else {
-          return nil
-        }
-        return dataToToken(data)
-      }()
-
-      completion(token)
-    }
+  static func getToken(key: String) -> String? {
+    let query = [
+      kSecClass: kSecClassGenericPassword,
+      kSecAttrService: service,
+      kSecAttrAccount: key,
+      kSecMatchLimit: kSecMatchLimitOne,
+      kSecReturnData: true
+    ] as CFDictionary
+    
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query, &result)
+    
+    let token: String? = {
+      guard status == errSecSuccess,
+            let data = result as? Data else {
+        return nil
+      }
+      return dataToToken(data)
+    }()
+    return token
   }
   
   private static func addToken(_ token: String, key: String) throws {
