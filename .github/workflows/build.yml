@@ -28,5 +28,5 @@ jobs:
       - name: Build TestApp
         run: |
           cd Example 
-          sed -i '' "s/SWIFT_VERSION = 5\.0;/SWIFT_VERSION = ${{ env.SWIFT_VERSION }};/g" Example/DemoApp.xcodeproj/project.pbxproj
+          sed -i '' "s/SWIFT_VERSION = 5\.0;/SWIFT_VERSION = ${{ env.SWIFT_VERSION }};/g" DemoApp.xcodeproj/project.pbxproj
           xcodebuild build -scheme DemoApp -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -project DemoApp.xcodeproj
