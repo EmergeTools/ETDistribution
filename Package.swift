@@ -20,6 +20,5 @@ let package = Package(
             dependencies: [],
             path: "Sources"
         ),
-    ],
-    swiftLanguageVersions: [.v6, .v5]
+    ]
 )
