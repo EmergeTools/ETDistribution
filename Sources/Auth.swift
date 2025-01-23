@@ -80,7 +80,7 @@ enum Auth {
     }
   }
   
-  private static func refreshAccessToken(_ refreshToken: String, completion: @escaping @Sendable (Result<String, Error>) -> Void) {
+  private static func refreshAccessToken(_ refreshToken: String, completion: @escaping @MainActor (Result<String, Error>) -> Void) {
     let url = URL(string: "oauth/token", relativeTo: Constants.url)!
 
     let parameters = [
@@ -94,18 +94,25 @@ enum Auth {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try! JSONSerialization.data(withJSONObject: parameters, options: [])
     
-    URLSession(configuration: URLSessionConfiguration.ephemeral).refreshAccessToken(request) { result in
-      switch result {
+    URLSession(configuration: URLSessionConfiguration.ephemeral).refreshAccessToken(request) { requestResult in
+      var result: Result<String, Error> = .failure(RequestError.unknownError)
+      defer {
+        DispatchQueue.main.async { [result] in
+          completion(result)
+        }
+      }
+      
+      switch requestResult {
       case .success(let response):
         KeychainHelper.setToken(response.accessToken, key: Constants.accessTokenKey) { error in
           if let error = error {
-            completion(.failure(error))
+            result = .failure(error)
             return
           }
-          completion(.success(response.accessToken))
+          result = .success(response.accessToken)
         }
       case .failure(let error):
-        completion(.failure(error))
+        result = .failure(error)
       }
     }
   }
