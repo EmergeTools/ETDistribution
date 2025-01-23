@@ -39,15 +39,15 @@ extension URLSession {
     }
   }
   
-  private func perform<T: Decodable>(_ request: URLRequest,
+  private func perform<T: Sendable & Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
                                      useCamelCase: Bool = true,
                                      completion: @escaping @MainActor (Result<T, Error>) -> Void,
-                                     decodeErrorData: ((Data, Int) -> Error)?) {
+                                     decodeErrorData: (@Sendable (Data, Int) -> Error)?) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
       var result: Result<T, Error> = .failure(RequestError.unknownError)
       defer {
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [result] in
           completion(result)
         }
       }

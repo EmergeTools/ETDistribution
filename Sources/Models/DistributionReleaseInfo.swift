@@ -8,7 +8,7 @@
 import Foundation
 
 @objc
-public final class DistributionReleaseInfo: NSObject, Decodable {
+public final class DistributionReleaseInfo: NSObject, Decodable, Sendable {
   public let id: String
   public let tag: String
   public let version: String
