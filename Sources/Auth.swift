@@ -23,7 +23,7 @@ enum Auth {
     static let refreshTokenKey = "refreshToken"
   }
   
-  static func getAccessToken(settings: LoginSetting, completion: @escaping (Result<String, Error>) -> Void) {
+  static func getAccessToken(settings: LoginSetting, completion: @escaping @MainActor (Result<String, Error>) -> Void) {
     KeychainHelper.getToken(key: Constants.accessTokenKey) { token in
       if let token = token,
          JWTHelper.isValid(token: token) {
@@ -54,7 +54,7 @@ enum Auth {
     }
   }
   
-  private static func requestLogin(_ settings: LoginSetting, _ completion: @escaping (Result<String, Error>) -> Void) {
+  private static func requestLogin(_ settings: LoginSetting, _ completion: @escaping @MainActor (Result<String, Error>) -> Void) {
     login(settings: settings) { result in
       switch result {
       case .success(let response):
@@ -111,7 +111,7 @@ enum Auth {
 
   private static func login(
     settings: LoginSetting,
-    completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
+    completion: @escaping @MainActor (Result<AuthCodeResponse, Error>) -> Void)
   {
     let verifier = getVerifier()!
     let challenge = getChallenge(for: verifier)!
@@ -139,7 +139,9 @@ enum Auth {
       url: url,
       callbackURLScheme: Constants.redirectUri.scheme!) { url, error in
         if let error {
-          completion(.failure(error))
+          DispatchQueue.main.async {
+            completion(.failure(error))
+          }
           return
         }
 
@@ -151,10 +153,14 @@ enum Auth {
               completion(result)
             }
           } else {
-            completion(.failure(LoginError.noCode))
+            DispatchQueue.main.async {
+              completion(.failure(LoginError.noCode))
+            }
           }
         } else {
-          completion(.failure(LoginError.noUrl))
+          DispatchQueue.main.async {
+            completion(.failure(LoginError.noUrl))
+          }
         }
       }
     session.presentationContextProvider = PresentationContextProvider.shared
@@ -164,7 +170,7 @@ enum Auth {
   private static func exchangeAuthorizationCodeForTokens(
     authorizationCode: String,
     verifier: String,
-    completion: @escaping (Result<AuthCodeResponse, Error>) -> Void)
+    completion: @escaping @MainActor (Result<AuthCodeResponse, Error>) -> Void)
   {
     let url = URL(string: "oauth/token", relativeTo: Constants.url)!
 
