@@ -30,7 +30,7 @@ public enum LoginLevel: Int, Sendable {
 ///
 /// Note: `tagName` is generally not needed, the SDK will identify the tag automatically.
 @objc
-public final class CheckForUpdateParams: NSObject, Sendable {
+public final class CheckForUpdateParams: NSObject {
 
   /// Create a new CheckForUpdateParams object.
   ///
