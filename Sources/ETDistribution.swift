@@ -109,9 +109,7 @@ public final class ETDistribution: NSObject {
           self?.getReleaseInfo(releaseId: releaseId, completion: completion)
           return
         }
-        DispatchQueue.main.async {
-          completion(result)
-        }
+        completion(result)
       }
     }
   }
