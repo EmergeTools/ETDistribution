@@ -14,7 +14,7 @@ enum KeychainError: LocalizedError {
 enum KeychainHelper {
   static let service = "com.emerge.ETDistribution"
   
-  static func setToken(_ token: String, key: String, completion: @escaping (Error?) -> Void) {
+  static func setToken(_ token: String, key: String, completion: @escaping @Sendable (Error?) -> Void) {
     getToken(key: key) { existingToken in
       // This is executed in a background thread
       do {

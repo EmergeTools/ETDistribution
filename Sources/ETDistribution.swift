@@ -105,7 +105,7 @@ public final class ETDistribution: NSObject {
       getReleaseInfo(releaseId: releaseId, accessToken: nil) { [weak self] result in
         if case .failure(let error) = result,
            case RequestError.loginRequired = error {
-          Task {
+          Task { [weak self] in
             // Attempt login if backend returns "Login Required"
             await self?.setLoginRequired()
             await self?.getReleaseInfo(releaseId: releaseId, completion: completion)
@@ -207,7 +207,7 @@ public final class ETDistribution: NSObject {
       if let completion = completion {
         completion(mappedResult)
       } else if let response = try? mappedResult.get() {
-        Task {
+        Task { [weak self] in
           await self?.handleResponse(response: response)
         }
       }
@@ -286,12 +286,12 @@ public final class ETDistribution: NSObject {
         guard case let .success(accessToken) = result else {
           return
         }
-        Task {
+        Task { [weak self] in
           await self?.getReleaseInfo(releaseId: release.id, accessToken: accessToken) { [weak self] result in
             guard case .success(let release) = result else {
               return
             }
-            Task {
+            Task { [weak self] in
               await self?.installAppWithDownloadString(release.downloadUrl)
             }
           }
