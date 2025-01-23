@@ -15,25 +15,25 @@ enum RequestError: Error {
 }
 
 extension URLSession {
-  func checkForUpdate(_ request: URLRequest, completion: @escaping (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
+  func checkForUpdate(_ request: URLRequest, completion: @escaping @Sendable (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
     self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
       return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
     }
   }
   
-  func getAuthDataWith(_ request: URLRequest, completion: @escaping (Result<AuthCodeResponse, Error>) -> Void) {
+  func getAuthDataWith(_ request: URLRequest, completion: @escaping @Sendable (Result<AuthCodeResponse, Error>) -> Void) {
     self.perform(request, decode: AuthCodeResponse.self, useCamelCase: false, completion: completion) { _, _ in
       return RequestError.badRequest("")
     }
   }
   
-  func refreshAccessToken(_ request: URLRequest, completion: @escaping (Result<AuthRefreshResponse, Error>) -> Void) {
+  func refreshAccessToken(_ request: URLRequest, completion: @escaping @Sendable (Result<AuthRefreshResponse, Error>) -> Void) {
     self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: false, completion: completion) { _, _ in
       return RequestError.badRequest("")
     }
   }
   
-  func getReleaseInfo(_ request: URLRequest, completion: @escaping (Result<DistributionReleaseInfo, Error>) -> Void) {
+  func getReleaseInfo(_ request: URLRequest, completion: @escaping @Sendable (Result<DistributionReleaseInfo, Error>) -> Void) {
     self.perform(request, decode: DistributionReleaseInfo.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
       return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
     }
@@ -42,7 +42,7 @@ extension URLSession {
   private func perform<T: Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
                                      useCamelCase: Bool = true,
-                                     completion: @escaping (Result<T, Error>) -> Void,
+                                     completion: @escaping @Sendable (Result<T, Error>) -> Void,
                                      decodeErrorData: ((Data, Int) -> Error)?) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
       var result: Result<T, Error> = .failure(RequestError.unknownError)
