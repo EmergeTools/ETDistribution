@@ -38,7 +38,7 @@ public final class ETDistribution: NSObject {
   /// }
   /// ```
   public func checkForUpdate(params: CheckForUpdateParams,
-                             completion: (@Sendable (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                             completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     checkRequest(params: params, completion: completion)
   }
   
@@ -64,8 +64,8 @@ public final class ETDistribution: NSObject {
   /// ```
   @objc
   public func checkForUpdate(params: CheckForUpdateParams,
-                             onReleaseAvailable: (@Sendable (DistributionReleaseInfo?) -> Void)? = nil,
-                             onError: (@Sendable (Error) -> Void)? = nil) {
+                             onReleaseAvailable: (@MainActor (DistributionReleaseInfo?) -> Void)? = nil,
+                             onError: (@MainActor (Error) -> Void)? = nil) {
     checkRequest(params: params) { result in
       switch result {
       case.success(let releaseInfo):
@@ -132,7 +132,7 @@ public final class ETDistribution: NSObject {
   }
 
   private func checkRequest(params: CheckForUpdateParams,
-                            completion: (@Sendable (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                            completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
 #if targetEnvironment(simulator)
     // Not checking for updates on the simulator
     return
@@ -161,9 +161,7 @@ public final class ETDistribution: NSObject {
            case RequestError.loginRequired = error {
           // Attempt login if backend returns "Login Required"
           let params = CheckForUpdateParams(apiKey: params.apiKey, tagName: params.tagName, requiresLogin: true)
-          Task { [weak self] in
-            await self?.checkRequest(params: params, completion: completion)
-          }
+          self?.checkRequest(params: params, completion: completion)
           return
         }
         completion?(result)
@@ -174,7 +172,7 @@ public final class ETDistribution: NSObject {
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
                               accessToken: String? = nil,
-                                     completion: (@Sendable (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                                     completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }

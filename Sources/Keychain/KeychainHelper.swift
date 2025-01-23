@@ -17,20 +17,27 @@ enum KeychainHelper {
   static func setToken(_ token: String, key: String, completion: @escaping @MainActor (Error?) -> Void) {
     getToken(key: key) { existingToken in
       // This is executed in a background thread
+      var result: Error? = nil
+      defer {
+        DispatchQueue.main.async { [result] in
+          completion(result)
+        }
+      }
+      
       do {
         if existingToken == nil {
           try addToken(token, key: key)
         } else {
           try updateToken(token, key: key)
         }
-        completion(nil)
+        result = nil
       } catch {
-        completion(error)
+        result = error
       }
     }
   }
   
-  static func getToken(key: String, completion: @escaping @MainActor (String?) -> Void) {
+  static func getToken(key: String, completion: @escaping @Sendable (String?) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       let query = [
         kSecClass: kSecClassGenericPassword,
@@ -51,9 +58,7 @@ enum KeychainHelper {
         return dataToToken(data)
       }()
 
-      DispatchQueue.main.async {
-        completion(token)
-      }
+      completion(token)
     }
   }
   
