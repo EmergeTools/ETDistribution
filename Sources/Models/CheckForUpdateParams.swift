@@ -21,7 +21,7 @@ public enum LoginSetting: Sendable {
 ///   - everything: login is always required when doing API calls.
 @objc
 public enum LoginLevel: Int, Sendable {
-  case none
+  case noLogin
   case onlyForDownload
   case everything
 }
@@ -45,7 +45,7 @@ public final class CheckForUpdateParams: NSObject {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = requiresLogin ? .default : nil
-    self.loginLevel = requiresLogin ? .everything : .none
+    self.loginLevel = requiresLogin ? .everything : .noLogin
   }
 
   /// Create a new CheckForUpdateParams object with a connection name.

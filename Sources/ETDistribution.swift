@@ -90,7 +90,7 @@ public final class ETDistribution: NSObject {
   
   public func getReleaseInfo(releaseId: String, completion: @escaping (@MainActor (Result<DistributionReleaseInfo, Error>) -> Void)) {
     if let loginSettings = loginSettings,
-       (loginLevel?.rawValue ?? 0) > LoginLevel.none.rawValue {
+       (loginLevel?.rawValue ?? 0) > LoginLevel.noLogin.rawValue {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
