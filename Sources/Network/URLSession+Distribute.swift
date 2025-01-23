@@ -39,7 +39,7 @@ extension URLSession {
     }
   }
   
-  private func perform<T: Decodable>(_ request: URLRequest,
+  private func perform<T: Sendable & Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
                                      useCamelCase: Bool = true,
                                      completion: @escaping @MainActor (Result<T, Error>) -> Void,
