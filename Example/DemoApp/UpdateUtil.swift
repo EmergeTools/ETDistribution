@@ -6,14 +6,14 @@
 //  Copyright © 2024 Emerge Tools. All rights reserved.
 //
 
-
 import Foundation
 import UIKit
 import ETDistribution
 
 struct UpdateUtil {
   static func checkForUpdates() {
-    ETDistribution.shared.checkForUpdate(params: CheckForUpdateParams(apiKey: Constants.apiKey)) { result in
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: false, allowCheckOnSimulatorAndDebugging: true)
+    ETDistribution.shared.checkForUpdate(params: params) { result in
       guard case let .success(releaseInfo) = result else {
         if case let .failure(error) = result {
           print("Error checking for update: \(error)")
@@ -41,7 +41,7 @@ struct UpdateUtil {
   }
   
   static func checkForUpdatesWithLogin() {
-    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true)
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true, allowCheckOnSimulatorAndDebugging: true)
     ETDistribution.shared.checkForUpdate(params: params) { result in
       guard case let .success(releaseInfo) = result else {
         if case let .failure(error) = result {

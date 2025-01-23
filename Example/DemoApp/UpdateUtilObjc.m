@@ -13,7 +13,12 @@
 
 @implementation UpdateUtilObjc
 - (void) checkForUpdates {
-  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey] tagName:[Constants tagName] requiresLogin:NO];
+  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey]
+                                                                      tagName:[Constants tagName]
+                                                                requiresLogin:NO
+                                                     binaryIdentifierOverride:NULL
+                                                                appIdOverride:NULL
+                                            allowCheckOnSimulatorAndDebugging:YES];
   [[ETDistribution sharedInstance] checkForUpdateWithParams:params
                                          onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
     NSLog(@"Release info: %@", releaseInfo);
@@ -24,7 +29,12 @@
 }
 
 - (void) checkForUpdatesWithLogin {
-  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey] tagName:[Constants tagName] requiresLogin:YES];
+  CheckForUpdateParams *params = [[CheckForUpdateParams alloc] initWithApiKey:[Constants apiKey]
+                                                                      tagName:[Constants tagName]
+                                                                requiresLogin:YES
+                                                     binaryIdentifierOverride:NULL
+                                                                appIdOverride:NULL
+                                            allowCheckOnSimulatorAndDebugging:YES];
   [[ETDistribution sharedInstance] checkForUpdateWithParams:params
                                          onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
     NSLog(@"Release info: %@", releaseInfo);

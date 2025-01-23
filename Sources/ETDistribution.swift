@@ -127,11 +127,7 @@ public final class ETDistribution: NSObject {
 
   private func checkRequest(params: CheckForUpdateParams,
                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
-#if targetEnvironment(simulator)
-    // Not checking for updates on the simulator
-    return
-#else
-    guard !isDebuggerAttached() else {
+    guard params.allowCheckOnSimulatorAndDebugging || ( !isDebuggerAttached() && !isSimulator() ) else {
       // Not checking for updates when the debugger is attached
       return
     }
@@ -161,7 +157,6 @@ public final class ETDistribution: NSObject {
         completion?(result)
       }
     }
-#endif
   }
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
@@ -173,8 +168,8 @@ public final class ETDistribution: NSObject {
     
     components.queryItems = [
       URLQueryItem(name: "apiKey", value: params.apiKey),
-      URLQueryItem(name: "binaryIdentifier", value: uuid),
-      URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
+      URLQueryItem(name: "binaryIdentifier", value: params.binaryIdentifierOverride ?? uuid),
+      URLQueryItem(name: "appId", value: params.appIdOverride ?? Bundle.main.bundleIdentifier),
       URLQueryItem(name: "platform", value: "ios")
     ]
     if let tagName = params.tagName {
@@ -255,6 +250,14 @@ public final class ETDistribution: NSObject {
                                  message: message,
                                  actions: actions)
     }
+  }
+  
+  private func isSimulator() -> Bool {
+#if targetEnvironment(simulator)
+    return true
+#else
+    return false
+#endif
   }
   
   private func isDebuggerAttached() -> Bool {
