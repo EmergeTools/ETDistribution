@@ -103,11 +103,10 @@ public final class ETDistribution: NSObject {
       getReleaseInfo(releaseId: releaseId, accessToken: nil) { [weak self] result in
         if case .failure(let error) = result,
            case RequestError.loginRequired = error {
-          Task { [weak self] in
-            // Attempt login if backend returns "Login Required"
-            await self?.setLoginRequired()
-            await self?.getReleaseInfo(releaseId: releaseId, completion: completion)
-          }
+          // Attempt login if backend returns "Login Required"
+          self?.loginSettings = LoginSetting.default
+          self?.loginLevel = .onlyForDownload
+          self?.getReleaseInfo(releaseId: releaseId, completion: completion)
           return
         }
         DispatchQueue.main.async {
@@ -115,11 +114,6 @@ public final class ETDistribution: NSObject {
         }
       }
     }
-  }
-  
-  private func setLoginRequired() {
-    loginSettings = LoginSetting.default
-    loginLevel = .onlyForDownload
   }
 
   // MARK: - Private
@@ -284,9 +278,7 @@ public final class ETDistribution: NSObject {
           guard case .success(let release) = result else {
             return
           }
-          Task { [weak self] in
-            await self?.installAppWithDownloadString(release.downloadUrl)
-          }
+          self?.installAppWithDownloadString(release.downloadUrl)
         }
       }
     } else {
