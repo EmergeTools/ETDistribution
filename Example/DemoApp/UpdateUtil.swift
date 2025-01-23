@@ -27,6 +27,7 @@ struct UpdateUtil {
     }
   }
   
+  @MainActor
   static func handleUpdateResult(result: Result<DistributionReleaseInfo?, Error>) {
     guard case let .success(releaseInfo) = result else {
       if case let .failure(error) = result {
@@ -42,16 +43,14 @@ struct UpdateUtil {
     
     print("Update found: \(releaseInfo), requires login: \(releaseInfo.loginRequiredForDownload)")
     if releaseInfo.loginRequiredForDownload {
-      Task {
-        // Get new release info, with login
-        await ETDistribution.shared.getReleaseInfo(releaseId: releaseInfo.id) { newReleaseInfo in
-          if case let .success(newReleaseInfo) = newReleaseInfo {
-            UpdateUtil.installReleaseIsolatedContext(releaseInfo: newReleaseInfo)
-          }
+      // Get new release info, with login
+      ETDistribution.shared.getReleaseInfo(releaseId: releaseInfo.id) { newReleaseInfo in
+        if case let .success(newReleaseInfo) = newReleaseInfo {
+          UpdateUtil.installRelease(releaseInfo: newReleaseInfo)
         }
       }
     } else {
-      UpdateUtil.installReleaseIsolatedContext(releaseInfo: releaseInfo)
+      UpdateUtil.installRelease(releaseInfo: releaseInfo)
     }
   }
   
@@ -74,12 +73,6 @@ struct UpdateUtil {
       SecItemDelete(attributes)
       
       completion()
-    }
-  }
-  
-  private static func installReleaseIsolatedContext(releaseInfo: DistributionReleaseInfo) {
-    Task {
-      await UpdateUtil.installRelease(releaseInfo: releaseInfo)
     }
   }
   
