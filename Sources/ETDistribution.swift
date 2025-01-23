@@ -94,9 +94,7 @@ public final class ETDistribution: NSObject {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          Task { [weak self] in
-            await self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
-          }
+          self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
         case .failure(let error):
           completion(.failure(error))
         }
@@ -152,9 +150,7 @@ public final class ETDistribution: NSObject {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          Task { [weak self] in
-            await self?.getUpdatesFromBackend(params: params, accessToken: accessToken, completion: completion)
-          }
+          self?.getUpdatesFromBackend(params: params, accessToken: accessToken, completion: completion)
         case .failure(let error):
           completion?(.failure(error))
         }
@@ -207,9 +203,7 @@ public final class ETDistribution: NSObject {
       if let completion = completion {
         completion(mappedResult)
       } else if let response = try? mappedResult.get() {
-        Task { [weak self] in
-          await self?.handleResponse(response: response)
-        }
+        self?.handleResponse(response: response)
       }
     }
   }
@@ -286,14 +280,12 @@ public final class ETDistribution: NSObject {
         guard case let .success(accessToken) = result else {
           return
         }
-        Task { [weak self] in
-          await self?.getReleaseInfo(releaseId: release.id, accessToken: accessToken) { [weak self] result in
-            guard case .success(let release) = result else {
-              return
-            }
-            Task { [weak self] in
-              await self?.installAppWithDownloadString(release.downloadUrl)
-            }
+        self?.getReleaseInfo(releaseId: release.id, accessToken: accessToken) { [weak self] result in
+          guard case .success(let release) = result else {
+            return
+          }
+          Task { [weak self] in
+            await self?.installAppWithDownloadString(release.downloadUrl)
           }
         }
       }

@@ -39,7 +39,7 @@ enum Auth {
                 switch result {
                 case .success(let accessToken):
                   completion(.success(accessToken))
-                case .failure(let error):
+                case .failure:
                   requestLogin(settings, completion)
                 }
               }
