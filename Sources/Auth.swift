@@ -54,6 +54,7 @@ enum Auth {
     }
   }
   
+  @MainActor
   private static func requestLogin(_ settings: LoginSetting, _ completion: @escaping @MainActor (Result<String, Error>) -> Void) {
     login(settings: settings) { result in
       switch result {

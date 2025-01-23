@@ -14,7 +14,7 @@ enum KeychainError: LocalizedError {
 enum KeychainHelper {
   static let service = "com.emerge.ETDistribution"
   
-  static func setToken(_ token: String, key: String, completion: @escaping @Sendable (Error?) -> Void) {
+  static func setToken(_ token: String, key: String, completion: @escaping @MainActor (Error?) -> Void) {
     getToken(key: key) { existingToken in
       // This is executed in a background thread
       do {
@@ -30,7 +30,7 @@ enum KeychainHelper {
     }
   }
   
-  static func getToken(key: String, completion: @escaping @Sendable (String?) -> Void) {
+  static func getToken(key: String, completion: @escaping @MainActor (String?) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       let query = [
         kSecClass: kSecClassGenericPassword,
@@ -51,7 +51,9 @@ enum KeychainHelper {
         return dataToToken(data)
       }()
 
-      completion(token)
+      DispatchQueue.main.async {
+        completion(token)
+      }
     }
   }
   
