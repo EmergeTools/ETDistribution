@@ -43,7 +43,7 @@ extension URLSession {
                                      decode decodable: T.Type,
                                      useCamelCase: Bool = true,
                                      completion: @escaping @Sendable (Result<T, Error>) -> Void,
-                                     decodeErrorData: ((Data, Int) -> Error)?) {
+                                     decodeErrorData: (@Sendable (Data, Int) -> Error)?) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
       var result: Result<T, Error> = .failure(RequestError.unknownError)
       defer {

@@ -94,7 +94,7 @@ public final class ETDistribution: NSObject {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          Task {
+          Task { [weak self] in
             await self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
           }
         case .failure(let error):

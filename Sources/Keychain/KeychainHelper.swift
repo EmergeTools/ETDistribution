@@ -30,7 +30,7 @@ enum KeychainHelper {
     }
   }
   
-  static func getToken(key: String, completion: @escaping (String?) -> Void) {
+  static func getToken(key: String, completion: @escaping @Sendable (String?) -> Void) {
     DispatchQueue.global(qos: .userInitiated).async {
       let query = [
         kSecClass: kSecClassGenericPassword,
