@@ -88,7 +88,7 @@ public final class ETDistribution: NSObject {
     return components.url
   }
   
-  public func getReleaseInfo(releaseId: String, completion: @escaping (@Sendable (Result<DistributionReleaseInfo, Error>) -> Void)) {
+  public func getReleaseInfo(releaseId: String, completion: @escaping (@MainActor (Result<DistributionReleaseInfo, Error>) -> Void)) {
     if let loginSettings = loginSettings,
        (loginLevel?.rawValue ?? 0) > LoginLevel.none.rawValue {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
@@ -110,7 +110,9 @@ public final class ETDistribution: NSObject {
           }
           return
         }
-        completion(result)
+        DispatchQueue.main.async {
+          completion(result)
+        }
       }
     }
   }
@@ -208,7 +210,7 @@ public final class ETDistribution: NSObject {
   
   private func getReleaseInfo(releaseId: String,
                               accessToken: String? = nil,
-                              completion: @escaping @Sendable (Result<DistributionReleaseInfo, Error>) -> Void) {
+                              completion: @escaping @MainActor (Result<DistributionReleaseInfo, Error>) -> Void) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
       fatalError("Invalid URL")
     }
