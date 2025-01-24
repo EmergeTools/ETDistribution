@@ -8,7 +8,7 @@
 import UIKit
 import Foundation
 
-@objc
+@objc @MainActor
 public final class ETDistribution: NSObject {
   // MARK: - Public
   @objc(sharedInstance)
@@ -38,7 +38,7 @@ public final class ETDistribution: NSObject {
   /// }
   /// ```
   public func checkForUpdate(params: CheckForUpdateParams,
-                             completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                             completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     checkRequest(params: params, completion: completion)
   }
   
@@ -64,8 +64,8 @@ public final class ETDistribution: NSObject {
   /// ```
   @objc
   public func checkForUpdate(params: CheckForUpdateParams,
-                             onReleaseAvailable: ((DistributionReleaseInfo?) -> Void)? = nil,
-                             onError: ((Error) -> Void)? = nil) {
+                             onReleaseAvailable: (@MainActor (DistributionReleaseInfo?) -> Void)? = nil,
+                             onError: (@MainActor (Error) -> Void)? = nil) {
     checkRequest(params: params) { result in
       switch result {
       case.success(let releaseInfo):
@@ -88,9 +88,9 @@ public final class ETDistribution: NSObject {
     return components.url
   }
   
-  public func getReleaseInfo(releaseId: String, completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
+  public func getReleaseInfo(releaseId: String, completion: @escaping (@MainActor (Result<DistributionReleaseInfo, Error>) -> Void)) {
     if let loginSettings = loginSettings,
-       (loginLevel?.rawValue ?? 0) > LoginLevel.none.rawValue {
+       (loginLevel?.rawValue ?? 0) > LoginLevel.noLogin.rawValue {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
@@ -126,7 +126,7 @@ public final class ETDistribution: NSObject {
   }
 
   private func checkRequest(params: CheckForUpdateParams,
-                            completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                            completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard params.allowCheckOnSimulatorAndDebugging || ( !isDebuggerAttached() && !isSimulator() ) else {
       // Not checking for updates when the debugger is attached
       return
@@ -161,7 +161,7 @@ public final class ETDistribution: NSObject {
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
                               accessToken: String? = nil,
-                              completion: ((Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
+                                     completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
       fatalError("Invalid URL")
     }
@@ -197,7 +197,7 @@ public final class ETDistribution: NSObject {
   
   private func getReleaseInfo(releaseId: String,
                               accessToken: String? = nil,
-                              completion: @escaping ((Result<DistributionReleaseInfo, Error>) -> Void)) {
+                              completion: @escaping @MainActor (Result<DistributionReleaseInfo, Error>) -> Void) {
     guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
       fatalError("Invalid URL")
     }

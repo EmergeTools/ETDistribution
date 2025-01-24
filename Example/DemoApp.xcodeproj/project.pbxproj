@@ -11,11 +11,26 @@
 		F41853D22CB70EE3007F7CE8 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41853D12CB70EE3007F7CE8 /* Constants.swift */; };
 		F41853D42CB70EF0007F7CE8 /* UpdateUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41853D32CB70EF0007F7CE8 /* UpdateUtil.swift */; };
 		F41853D62CB70EF8007F7CE8 /* UpdateUtilObjc.m in Sources */ = {isa = PBXBuildFile; fileRef = F41853D52CB70EF8007F7CE8 /* UpdateUtilObjc.m */; };
+		F4B700BB2D4295C800D255F3 /* ETDistribution in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F41853CF2CB70E47007F7CE8 /* ETDistribution */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA1671C32A5367A800A42DB0 /* DemoAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1671C22A5367A800A42DB0 /* DemoAppApp.swift */; };
 		FA1671C52A5367A800A42DB0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1671C42A5367A800A42DB0 /* ContentView.swift */; };
 		FA1671C72A5367A800A42DB0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA1671C62A5367A800A42DB0 /* Assets.xcassets */; };
 		FA1671CB2A5367A800A42DB0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA1671CA2A5367A800A42DB0 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F4B700BC2D4295C800D255F3 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F4B700BB2D4295C800D255F3 /* ETDistribution in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F41853D12CB70EE3007F7CE8 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -104,6 +119,7 @@
 				FA1671BB2A5367A800A42DB0 /* Sources */,
 				FA1671BC2A5367A800A42DB0 /* Frameworks */,
 				FA1671BD2A5367A800A42DB0 /* Resources */,
+				F4B700BC2D4295C800D255F3 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

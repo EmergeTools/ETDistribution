@@ -9,7 +9,7 @@ import Foundation
 
 /// Type of authenticated access to required. The default case shows the Emerge Tools login page.
 /// A custom connection can be used to automatically redirect to an SSO page.
-public enum LoginSetting {
+public enum LoginSetting: Sendable {
   case `default`
   case connection(String)
 }
@@ -20,8 +20,8 @@ public enum LoginSetting {
 ///   - onlyForDownload: login is required only when downloading the app
 ///   - everything: login is always required when doing API calls.
 @objc
-public enum LoginLevel: Int {
-  case none
+public enum LoginLevel: Int, Sendable {
+  case noLogin
   case onlyForDownload
   case everything
 }
@@ -51,7 +51,7 @@ public final class CheckForUpdateParams: NSObject {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = requiresLogin ? .default : nil
-    self.loginLevel = requiresLogin ? .everything : .none
+    self.loginLevel = requiresLogin ? .everything : .noLogin
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
     self.allowCheckOnSimulatorAndDebugging = allowCheckOnSimulatorAndDebugging
