@@ -23,11 +23,13 @@ public final class DistributionReleaseInfo: NSObject, Decodable, Sendable {
 
   public var currentReleaseCreated: Date? {
     let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [ .withFractionalSeconds ]
     return formatter.date(from: currentReleaseDate)
   }
 
   public var created: Date? {
     let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [ .withFractionalSeconds ]
     return formatter.date(from: createdDate)
   }
 }
