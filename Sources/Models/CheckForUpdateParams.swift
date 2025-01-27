@@ -38,14 +38,20 @@ public final class CheckForUpdateParams: NSObject {
   ///   - apiKey: A `String` API key used for authentication.
   ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - requiresLogin: A `Bool` indicating if user login is required before checking for updates. Defaults to `false`.
+  ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
+  ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   @objc
   public init(apiKey: String,
               tagName: String? = nil,
-              requiresLogin: Bool = false) {
+              requiresLogin: Bool = false,
+              binaryIdentifierOverride: String? = nil,
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = requiresLogin ? .default : nil
     self.loginLevel = requiresLogin ? .everything : .noLogin
+    self.binaryIdentifierOverride = binaryIdentifierOverride
+    self.appIdOverride = appIdOverride
   }
 
   /// Create a new CheckForUpdateParams object with a connection name.
@@ -54,15 +60,22 @@ public final class CheckForUpdateParams: NSObject {
   ///   - apiKey: A `String` API key used for authentication.
   ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - connection: A `String` connection name for a company. Will automatically redirect login to the company’s SSO page.
+  ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
+  ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
+  ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   @objc
   public init(apiKey: String,
               tagName: String? = nil,
               connection: String,
-              loginLevel: LoginLevel = .everything) {
+              loginLevel: LoginLevel = .everything,
+              binaryIdentifierOverride: String? = nil,
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = .connection(connection)
     self.loginLevel = loginLevel
+    self.binaryIdentifierOverride = binaryIdentifierOverride
+    self.appIdOverride = appIdOverride
   }
 
   /// Create a new CheckForUpdateParams object with a login setting.
@@ -71,18 +84,27 @@ public final class CheckForUpdateParams: NSObject {
   ///   - apiKey: A `String` API key used for authentication.
   ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - loginSetting: A `LoginSetting` to require authenticated access to updates.
+  ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
+  ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
+  ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   public init(apiKey: String,
               tagName: String? = nil,
               loginSetting: LoginSetting,
-              loginLevel: LoginLevel = .everything) {
+              loginLevel: LoginLevel = .everything,
+              binaryIdentifierOverride: String? = nil,
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = loginSetting
     self.loginLevel = loginLevel
+    self.binaryIdentifierOverride = binaryIdentifierOverride
+    self.appIdOverride = appIdOverride
   }
 
   let apiKey: String
   let tagName: String?
   let loginSetting: LoginSetting?
   let loginLevel: LoginLevel?
+  let binaryIdentifierOverride: String?
+  let appIdOverride: String?
 }

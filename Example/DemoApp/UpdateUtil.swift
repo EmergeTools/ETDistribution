@@ -6,7 +6,6 @@
 //  Copyright © 2024 Emerge Tools. All rights reserved.
 //
 
-
 import Foundation
 import UIKit
 import ETDistribution
@@ -14,7 +13,8 @@ import ETDistribution
 struct UpdateUtil {
   @MainActor
   static func checkForUpdates() {
-    ETDistribution.shared.checkForUpdate(params: CheckForUpdateParams(apiKey: Constants.apiKey)) { result in
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: false)
+    ETDistribution.shared.checkForUpdate(params: params) { result in
       handleUpdateResult(result: result)
     }
   }

@@ -91,6 +91,13 @@ Tags can be used to associate builds, you could use tags to represent the dev br
 
 Login levels can be configured to require login for certain actions (like downloading the update or checking for updates). They are set at [Emerge Tools Settings](https://www.emergetools.com/settings?tab=feature-configuration). You should match that level at the app level.
 
+### Debug Overrides
+
+There are several override options to help debug integration and test the SDK.
+They are:
+ - **binaryIdentifierOverride**: Allows overriding the binary identifier to test updates from a different build.
+ - **appIdOverride**: Allows changing the application identifier (aka Bundle Id).
+
 ### Handling Responses
 
 By default, if no completion closure is provided, the SDK will present an alert to the user, prompting them to install the release. You can customize this behavior using the closures provided by the API.

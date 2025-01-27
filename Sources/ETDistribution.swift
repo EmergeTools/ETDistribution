@@ -127,14 +127,6 @@ public final class ETDistribution: NSObject {
 
   private func checkRequest(params: CheckForUpdateParams,
                             completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
-#if targetEnvironment(simulator)
-    // Not checking for updates on the simulator
-    return
-#else
-    guard !isDebuggerAttached() else {
-      // Not checking for updates when the debugger is attached
-      return
-    }
     apiKey = params.apiKey
     loginLevel = params.loginLevel
     loginSettings = params.loginSetting
@@ -161,7 +153,6 @@ public final class ETDistribution: NSObject {
         completion?(result)
       }
     }
-#endif
   }
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
@@ -173,8 +164,8 @@ public final class ETDistribution: NSObject {
     
     components.queryItems = [
       URLQueryItem(name: "apiKey", value: params.apiKey),
-      URLQueryItem(name: "binaryIdentifier", value: uuid),
-      URLQueryItem(name: "appId", value: Bundle.main.bundleIdentifier),
+      URLQueryItem(name: "binaryIdentifier", value: params.binaryIdentifierOverride ?? uuid),
+      URLQueryItem(name: "appId", value: params.appIdOverride ?? Bundle.main.bundleIdentifier),
       URLQueryItem(name: "platform", value: "ios")
     ]
     if let tagName = params.tagName {
@@ -255,15 +246,6 @@ public final class ETDistribution: NSObject {
                                  message: message,
                                  actions: actions)
     }
-  }
-  
-  private func isDebuggerAttached() -> Bool {
-    var info = kinfo_proc()
-    var size = MemoryLayout.stride(ofValue: info)
-    var mib : [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
-    let junk = sysctl(&mib, UInt32(mib.count), &info, &size, nil, 0)
-    assert(junk == 0, "sysctl failed")
-    return (info.kp_proc.p_flag & P_TRACED) != 0
   }
   
   private func handleInstallRelease(_ release: DistributionReleaseInfo) {
