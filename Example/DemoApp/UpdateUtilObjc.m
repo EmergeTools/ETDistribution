@@ -17,8 +17,7 @@
                                                                       tagName:[Constants tagName]
                                                                 requiresLogin:NO
                                                      binaryIdentifierOverride:NULL
-                                                                appIdOverride:NULL
-                                            allowCheckOnSimulatorAndDebugging:YES];
+                                                                appIdOverride:NULL];
   [[ETDistribution sharedInstance] checkForUpdateWithParams:params
                                          onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
     NSLog(@"Release info: %@", releaseInfo);
@@ -33,8 +32,7 @@
                                                                       tagName:[Constants tagName]
                                                                 requiresLogin:YES
                                                      binaryIdentifierOverride:NULL
-                                                                appIdOverride:NULL
-                                            allowCheckOnSimulatorAndDebugging:YES];
+                                                                appIdOverride:NULL];
   [[ETDistribution sharedInstance] checkForUpdateWithParams:params
                                          onReleaseAvailable:^(DistributionReleaseInfo *releaseInfo) {
     NSLog(@"Release info: %@", releaseInfo);

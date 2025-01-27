@@ -40,21 +40,18 @@ public final class CheckForUpdateParams: NSObject {
   ///   - requiresLogin: A `Bool` indicating if user login is required before checking for updates. Defaults to `false`.
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
-  ///   - allowCheckOnSimulatorAndDebugging: Allow checking for updates when attached to a debugger and using a simulator
   @objc
   public init(apiKey: String,
               tagName: String? = nil,
               requiresLogin: Bool = false,
               binaryIdentifierOverride: String? = nil,
-              appIdOverride: String? = nil,
-              allowCheckOnSimulatorAndDebugging: Bool = false) {
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = requiresLogin ? .default : nil
     self.loginLevel = requiresLogin ? .everything : .noLogin
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
-    self.allowCheckOnSimulatorAndDebugging = allowCheckOnSimulatorAndDebugging
   }
 
   /// Create a new CheckForUpdateParams object with a connection name.
@@ -66,22 +63,19 @@ public final class CheckForUpdateParams: NSObject {
   ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
-  ///   - allowCheckOnSimulatorAndDebugging: Allow checking for updates when attached to a debugger and using a simulator
   @objc
   public init(apiKey: String,
               tagName: String? = nil,
               connection: String,
               loginLevel: LoginLevel = .everything,
               binaryIdentifierOverride: String? = nil,
-              appIdOverride: String? = nil,
-              allowCheckOnSimulatorAndDebugging: Bool = false) {
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = .connection(connection)
     self.loginLevel = loginLevel
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
-    self.allowCheckOnSimulatorAndDebugging = allowCheckOnSimulatorAndDebugging
   }
 
   /// Create a new CheckForUpdateParams object with a login setting.
@@ -93,21 +87,18 @@ public final class CheckForUpdateParams: NSObject {
   ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
-  ///   - allowCheckOnSimulatorAndDebugging: Allow checking for updates when attached to a debugger and using a simulator
   public init(apiKey: String,
               tagName: String? = nil,
               loginSetting: LoginSetting,
               loginLevel: LoginLevel = .everything,
               binaryIdentifierOverride: String? = nil,
-              appIdOverride: String? = nil,
-              allowCheckOnSimulatorAndDebugging: Bool = false) {
+              appIdOverride: String? = nil) {
     self.apiKey = apiKey
     self.tagName = tagName
     self.loginSetting = loginSetting
     self.loginLevel = loginLevel
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
-    self.allowCheckOnSimulatorAndDebugging = allowCheckOnSimulatorAndDebugging
   }
 
   let apiKey: String
@@ -116,5 +107,4 @@ public final class CheckForUpdateParams: NSObject {
   let loginLevel: LoginLevel?
   let binaryIdentifierOverride: String?
   let appIdOverride: String?
-  let allowCheckOnSimulatorAndDebugging: Bool
 }

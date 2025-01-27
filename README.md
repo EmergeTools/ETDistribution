@@ -97,7 +97,6 @@ There are several override options to help debug integration and test the SDK.
 They are:
  - **binaryIdentifierOverride**: Allows overriding the binary identifier to test updates from a different build.
  - **appIdOverride**: Allows changing the application identifier (aka Bundle Id).
- - **allowCheckOnSimulatorAndDebugging**: Allows checking for updates when attached to a debugger or using a simulator.
 
 ### Handling Responses
 

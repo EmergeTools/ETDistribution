@@ -13,7 +13,7 @@ import ETDistribution
 struct UpdateUtil {
   @MainActor
   static func checkForUpdates() {
-    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: false, allowCheckOnSimulatorAndDebugging: true)
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: false)
     ETDistribution.shared.checkForUpdate(params: params) { result in
       handleUpdateResult(result: result)
     }
@@ -21,7 +21,7 @@ struct UpdateUtil {
   
   @MainActor
   static func checkForUpdatesWithLogin() {
-    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true, allowCheckOnSimulatorAndDebugging: true)
+    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true)
     ETDistribution.shared.checkForUpdate(params: params) { result in
       handleUpdateResult(result: result)
     }
