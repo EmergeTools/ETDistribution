@@ -138,6 +138,8 @@ enum Auth {
     entries["redirect_uri"] = Constants.redirectUri.absoluteString
     entries["state"] = generateDefaultState()
     entries["audience"] = "https://auth0-jwt-authorizer"
+    entries["code_challenge"] = challenge
+    entries["code_challenge_method"] = "S256"
     entries.forEach { items.append(URLQueryItem(name: $0, value: $1)) }
     components.queryItems = items
     components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")

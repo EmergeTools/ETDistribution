@@ -22,8 +22,8 @@ jobs:
           echo "Swift major version: $SWIFT_MAJOR_VERSION"
           echo "SWIFT_VERSION=$SWIFT_MAJOR_VERSION.0" >> "$GITHUB_ENV"
       - name: Build for iOS Simulator
-        run: xcodebuild build -scheme ETDistribution -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+        run: xcodebuild build -scheme ETDistribution -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
       - name: Build for iOS
-        run: xcodebuild build -scheme ETDistribution -sdk iphoneos -destination 'generic/platform=iOS'
+        run: xcodebuild build -scheme ETDistribution -sdk iphoneos -destination 'generic/platform=iOS' SWIFT_TREAT_WARNINGS_AS_ERRORS=YES GCC_TREAT_WARNINGS_AS_ERRORS=YES
       - name: Build TestApp
         run: cd Example && xcodebuild build -scheme DemoApp -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -project DemoApp.xcodeproj SWIFT_VERSION=${{ env.SWIFT_VERSION }}

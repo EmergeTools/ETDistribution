@@ -26,8 +26,10 @@ build_framework() {
         -destination "$destination" \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         INSTALL_PATH='Library/Frameworks' \
-        OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
+        OTHER_SWIFT_FLAGS='-no-verify-emitted-module-interface -Xfrontend -module-interface-preserve-types-as-written' \
         SWIFT_VERSION=${SWIFT_VERSION:-5.0} \
+        SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+        GCC_TREAT_WARNINGS_AS_ERRORS=YES \
         LD_GENERATE_MAP_FILE=YES
 
     FRAMEWORK_MODULES_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks/$scheme.framework/Modules"
