@@ -22,14 +22,10 @@ public final class DistributionReleaseInfo: NSObject, Decodable, Sendable {
   public let loginRequiredForDownload: Bool
 
   public var currentReleaseCreated: Date? {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [ .withFractionalSeconds ]
-    return formatter.date(from: currentReleaseDate)
+    Date.fromString(currentReleaseDate)
   }
 
   public var created: Date? {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [ .withFractionalSeconds ]
-    return formatter.date(from: createdDate)
+    Date.fromString(createdDate)
   }
 }

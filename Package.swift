@@ -20,5 +20,10 @@ let package = Package(
             dependencies: [],
             path: "Sources"
         ),
+        .testTarget(
+            name: "ETDistributionTests",
+            dependencies: ["ETDistribution"],
+            path: "Tests"
+        ),
     ]
 )
