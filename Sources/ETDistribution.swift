@@ -76,6 +76,9 @@ public final class ETDistribution: NSObject {
     }
   }
 
+  /// Obtain a URL to install an IPA
+  /// - Parameter plistUrl: The URL to the plist containing the IPA information
+  /// - Returns: a URL ready to install the IPA using Itunes Services
   public func buildUrlForInstall(_ plistUrl: String) -> URL? {
     guard plistUrl != "REQUIRES_LOGIN",
       var components = URLComponents(string: "itms-services://") else {
@@ -111,6 +114,40 @@ public final class ETDistribution: NSObject {
         }
         completion(result)
       }
+    }
+  }
+  
+  /// Show prompt to install an update
+  /// - Parameter release: A Distribution Release Object
+  public func showReleaseInstallPrompt(for release: DistributionReleaseInfo) {
+    guard release.id != UserDefaults.skippedRelease,
+          (UserDefaults.postponeTimeout == nil || UserDefaults.postponeTimeout! < Date() ) else {
+      return
+    }
+    print("ETDistribution: Update Available: \(release.downloadUrl)")
+    let message = "New version \(release.version) is available"
+
+    var actions = [AlertAction]()
+    actions.append(AlertAction(title: "Install",
+                               style: .default,
+                               handler: { [weak self] _ in
+      self?.handleInstallRelease(release)
+    }))
+    actions.append(AlertAction(title: "Postpone updates for 1 day",
+                               style: .cancel,
+                               handler: { [weak self] _ in
+      self?.handlePostponeRelease()
+    }))
+    actions.append(AlertAction(title: "Skip",
+                               style: .destructive,
+                               handler: { [weak self] _ in
+      self?.handleSkipRelease(release)
+    }))
+    
+    DispatchQueue.main.async {
+      UIViewController.showAlert(title: "Update Available",
+                                 message: message,
+                                 actions: actions)
     }
   }
 
@@ -186,7 +223,7 @@ public final class ETDistribution: NSObject {
       if let completion = completion {
         completion(mappedResult)
       } else if let response = try? mappedResult.get() {
-        self?.handleResponse(response: response)
+        self?.showReleaseInstallPrompt(for: response)
       }
     }
   }
@@ -214,38 +251,6 @@ public final class ETDistribution: NSObject {
     }
     
     session.getReleaseInfo(request, completion: completion)
-  }
-  
-  private func handleResponse(response: DistributionReleaseInfo) {
-    guard response.id != UserDefaults.skippedRelease,
-          (UserDefaults.postponeTimeout == nil || UserDefaults.postponeTimeout! < Date() ) else {
-      return
-    }
-    print("ETDistribution: Update Available: \(response.downloadUrl)")
-    let message = "New version \(response.version) is available"
-
-    var actions = [AlertAction]()
-    actions.append(AlertAction(title: "Install",
-                               style: .default,
-                               handler: { [weak self] _ in
-      self?.handleInstallRelease(response)
-    }))
-    actions.append(AlertAction(title: "Postpone updates for 1 day",
-                               style: .cancel,
-                               handler: { [weak self] _ in
-      self?.handlePostponeRelease()
-    }))
-    actions.append(AlertAction(title: "Skip",
-                               style: .destructive,
-                               handler: { [weak self] _ in
-      self?.handleSkipRelease(response)
-    }))
-    
-    DispatchQueue.main.async {
-      UIViewController.showAlert(title: "Update Available",
-                                 message: message,
-                                 actions: actions)
-    }
   }
   
   private func handleInstallRelease(_ release: DistributionReleaseInfo) {
