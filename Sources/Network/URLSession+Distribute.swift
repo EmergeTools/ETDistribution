@@ -39,6 +39,12 @@ extension URLSession {
     }
   }
   
+  func getAvailableReleases(_ request: URLRequest, completion: @escaping @MainActor (Result<DistributionAvailableBuildsResponse, Error>) -> Void) {
+    self.perform(request, decode: DistributionAvailableBuildsResponse.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
+      return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
+    }
+  }
+  
   private func perform<T: Sendable & Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
                                      useCamelCase: Bool = true,
