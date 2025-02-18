@@ -42,6 +42,14 @@ struct ContentView: View {
       .foregroundColor(.black)
       .cornerRadius(10)
       
+      Button("Print Available Builds") {
+        UpdateUtil.getAllAvailableBuils()
+      }
+      .padding()
+      .background(.red)
+      .foregroundColor(.black)
+      .cornerRadius(10)
+
       Button("Clear Tokens") {
         UpdateUtil.clearTokens()
       }

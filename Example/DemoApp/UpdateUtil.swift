@@ -28,6 +28,15 @@ struct UpdateUtil {
   }
   
   @MainActor
+  static func getAllAvailableBuils() {
+    let params = GetAllReleasesParams(apiKey: Constants.apiKey,
+                                      requiresLogin: false)
+    ETDistribution.shared.getAvailableBuilds(params: params) { result in
+      print(result)
+    }
+  }
+  
+  @MainActor
   static func handleUpdateResult(result: Result<DistributionReleaseInfo?, Error>) {
     guard case let .success(releaseInfo) = result else {
       if case let .failure(error) = result {
