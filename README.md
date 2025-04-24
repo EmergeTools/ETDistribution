@@ -81,7 +81,7 @@ If you do not provide a completion handler, a default UI will be shown asking if
 
 ### API Key
 
-An API key is required to authenticate requests. You can obtain your API key from the Emerge Tools dashboard. Once you have the key, you can pass it as a parameter to the `checkForUpdate` method.
+An API key is required to authenticate requests. You can obtain your API key from the [build distribution configuration](https://www.emergetools.com/settings?tab=feature-configuration&cards=distribution_enabled). Once you have the key, you can pass it as a parameter to the `checkForUpdate` method.
 
 ### Tag Name (Optional)
 
