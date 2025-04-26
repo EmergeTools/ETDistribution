@@ -1,110 +1,87 @@
 //
-//  CheckForUpdateParams.swift
+//  GetAllReleasesParams.swift
 //  ETDistribution
 //
-//  Created by Noah Martin on 10/31/24.
+//  Created by Itay Brenner on 18/2/25.
 //
 
 import Foundation
 
-/// Type of authenticated access to required. The default case shows the Emerge Tools login page.
-/// A custom connection can be used to automatically redirect to an SSO page.
-public enum LoginSetting: Sendable {
-  case `default`
-  case connection(String)
-}
-
-/// Level of login required. By default no login is required
-/// Available levels:
-///   - none: No login is requiried
-///   - onlyForDownload: login is required only when downloading the app
-///   - everything: login is always required when doing API calls.
-@objc
-public enum LoginLevel: Int, Sendable {
-  case noLogin
-  case onlyForDownload
-  case everything
-}
-
-/// A model for configuring parameters needed to check for app updates.
+/// A model for configuring parameters needed to get an update information.
 ///
-/// Note: `tagName` is generally not needed, the SDK will identify the tag automatically.
 @objc
-public final class CheckForUpdateParams: NSObject {
+public final class GetAllReleasesParams: CommonParams {
 
-  /// Create a new CheckForUpdateParams object.
+  /// Create a new GetAllReleasesParams object.
   ///
   /// - Parameters:
   ///   - apiKey: A `String` API key used for authentication.
-  ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - requiresLogin: A `Bool` indicating if user login is required before checking for updates. Defaults to `false`.
+  ///   - page: Page Number, pages start from 1
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   @objc
   public init(apiKey: String,
-              tagName: String? = nil,
               requiresLogin: Bool = false,
+              page: NSNumber? = 1,
               binaryIdentifierOverride: String? = nil,
               appIdOverride: String? = nil) {
-    self.apiKey = apiKey
-    self.tagName = tagName
-    self.loginSetting = requiresLogin ? .default : nil
-    self.loginLevel = requiresLogin ? .everything : .noLogin
+    self.page = page ?? 1
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
+    super.init(apiKey: apiKey,
+               loginSetting: requiresLogin ? .default : nil,
+               loginLevel: requiresLogin ? .everything : .noLogin)
   }
 
-  /// Create a new CheckForUpdateParams object with a connection name.
+  /// Create a new GetAllReleasesParams object with a connection name.
   ///
   /// - Parameters:
   ///   - apiKey: A `String` API key used for authentication.
-  ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - connection: A `String` connection name for a company. Will automatically redirect login to the company’s SSO page.
   ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
+  ///   - page: Page Number, pages start from 1
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   @objc
   public init(apiKey: String,
-              tagName: String? = nil,
               connection: String,
               loginLevel: LoginLevel = .everything,
+              page: NSNumber? = 1,
               binaryIdentifierOverride: String? = nil,
               appIdOverride: String? = nil) {
-    self.apiKey = apiKey
-    self.tagName = tagName
-    self.loginSetting = .connection(connection)
-    self.loginLevel = loginLevel
+    self.page = page ?? 1
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
+    super.init(apiKey: apiKey,
+               loginSetting: .connection(connection),
+               loginLevel: loginLevel)
   }
-
-  /// Create a new CheckForUpdateParams object with a login setting.
+  
+  /// Create a new GetAllReleasesParams object with a login setting.
   ///
   /// - Parameters:
   ///   - apiKey: A `String` API key used for authentication.
-  ///   - tagName: An optional `String` that is the tag name used when this app was uploaded.
   ///   - loginSetting: A `LoginSetting` to require authenticated access to updates.
   ///   - loginLevel: An optional `LoginLevel` to set whether a login is required for downloading updates, checking for updates or never
+  ///   - page: Page Number, pages start from 1
   ///   - binaryIdentifierOverride: Override the binary identifier for local debugging
   ///   - appIdOverride: Override the app identifier (Bundle Id) for local debugging
   public init(apiKey: String,
-              tagName: String? = nil,
               loginSetting: LoginSetting,
               loginLevel: LoginLevel = .everything,
+              page: NSNumber? = 1,
               binaryIdentifierOverride: String? = nil,
               appIdOverride: String? = nil) {
-    self.apiKey = apiKey
-    self.tagName = tagName
-    self.loginSetting = loginSetting
-    self.loginLevel = loginLevel
+    self.page = page ?? 1
     self.binaryIdentifierOverride = binaryIdentifierOverride
     self.appIdOverride = appIdOverride
+    super.init(apiKey: apiKey,
+               loginSetting: loginSetting,
+               loginLevel: loginLevel)
   }
 
-  let apiKey: String
-  let tagName: String?
-  let loginSetting: LoginSetting?
-  let loginLevel: LoginLevel?
+  let page: NSNumber
   let binaryIdentifierOverride: String?
   let appIdOverride: String?
 }

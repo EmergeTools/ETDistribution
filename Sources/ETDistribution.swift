@@ -92,24 +92,36 @@ public final class ETDistribution: NSObject {
   }
   
   public func getReleaseInfo(releaseId: String, completion: @escaping (@MainActor (Result<DistributionReleaseInfo, Error>) -> Void)) {
+    let params = GetReleaseParams(apiKey: self.apiKey, releaseId: releaseId)
+    getReleaseInfo(params: params, completion: completion)
+  }
+  
+  public func getReleaseInfo(params: GetReleaseParams, completion: @escaping (@MainActor (Result<DistributionReleaseInfo, Error>) -> Void)) {
+    let loginSettings = params.loginSetting ?? self.loginSettings
+    let loginLevel = params.loginLevel ?? self.loginLevel
+    
     if let loginSettings = loginSettings,
        (loginLevel?.rawValue ?? 0) > LoginLevel.noLogin.rawValue {
       Auth.getAccessToken(settings: loginSettings) { [weak self] result in
         switch result {
         case .success(let accessToken):
-          self?.getReleaseInfo(releaseId: releaseId, accessToken: accessToken, completion: completion)
+          self?.getReleaseInfo(releaseId: params.releaseId, accessToken: accessToken, completion: completion)
         case .failure(let error):
           completion(.failure(error))
         }
       }
     } else {
-      getReleaseInfo(releaseId: releaseId, accessToken: nil) { [weak self] result in
+      getReleaseInfo(releaseId: params.releaseId, accessToken: nil) { [weak self] result in
         if case .failure(let error) = result,
            case RequestError.loginRequired = error {
           // Attempt login if backend returns "Login Required"
-          self?.loginSettings = LoginSetting.default
-          self?.loginLevel = .onlyForDownload
-          self?.getReleaseInfo(releaseId: releaseId, completion: completion)
+          let params = GetReleaseParams(apiKey: params.apiKey,
+                                        releaseId: params.releaseId,
+                                        loginSetting: LoginSetting.default,
+                                        loginLevel: .onlyForDownload)
+          self?.loginSettings = params.loginSetting
+          self?.loginLevel = params.loginLevel
+          self?.getReleaseInfo(params: params, completion: completion)
           return
         }
         completion(result)
@@ -150,6 +162,45 @@ public final class ETDistribution: NSObject {
                                  actions: actions)
     }
   }
+  
+  /// Obtain all available builds
+  /// - Parameters:
+  ///   - params: A `GetAllReleasesParams` object.
+  ///   - completion: A closure that is called with the result of all builds.
+  public func getAvailableBuilds(params: GetAllReleasesParams, completion: @escaping (@MainActor (Result<DistributionAvailableBuildsResponse, Error>) -> Void)) {
+    let loginSettings = params.loginSetting ?? self.loginSettings
+    let loginLevel = params.loginLevel ?? self.loginLevel
+    
+    if let loginSettings = loginSettings,
+       (loginLevel?.rawValue ?? 0) > LoginLevel.noLogin.rawValue {
+      Auth.getAccessToken(settings: loginSettings) { [weak self] result in
+        switch result {
+        case .success(let accessToken):
+          self?.getAllBuilds(params: params, accessToken: accessToken, completion: completion)
+        case .failure(let error):
+          completion(.failure(error))
+        }
+      }
+    } else {
+      getAllBuilds(params: params, accessToken: nil) { [weak self] result in
+        if case .failure(let error) = result,
+           case RequestError.loginRequired = error {
+          // Attempt login if backend returns "Login Required"
+          let params = GetAllReleasesParams(apiKey: params.apiKey,
+                                            loginSetting: LoginSetting.default,
+                                            loginLevel: .onlyForDownload,
+                                            binaryIdentifierOverride: params.binaryIdentifierOverride,
+                                            appIdOverride: params.appIdOverride
+          )
+          self?.loginSettings = params.loginSetting
+          self?.loginLevel = params.loginLevel
+          self?.getAvailableBuilds(params: params, completion: completion)
+          return
+        }
+        completion(result)
+      }
+    }
+  }
 
   // MARK: - Private
   private lazy var session = URLSession(configuration: URLSessionConfiguration.ephemeral)
@@ -157,6 +208,7 @@ public final class ETDistribution: NSObject {
   private var loginSettings: LoginSetting?
   private var loginLevel: LoginLevel?
   private var apiKey: String = ""
+  private static let baseUrl = "https://api.emergetools.com"
 
   override private init() {
     super.init()
@@ -195,28 +247,19 @@ public final class ETDistribution: NSObject {
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
                               accessToken: String? = nil,
                                      completion: (@MainActor (Result<DistributionReleaseInfo?, Error>) -> Void)? = nil) {
-    guard var components = URLComponents(string: "https://api.emergetools.com/distribution/checkForUpdates") else {
-      fatalError("Invalid URL")
-    }
-    
-    components.queryItems = [
-      URLQueryItem(name: "apiKey", value: params.apiKey),
-      URLQueryItem(name: "binaryIdentifier", value: params.binaryIdentifierOverride ?? uuid),
-      URLQueryItem(name: "appId", value: params.appIdOverride ?? Bundle.main.bundleIdentifier),
-      URLQueryItem(name: "platform", value: "ios")
+    var queryItems: [String: String?] = [
+      "apiKey": params.apiKey,
+      "binaryIdentifier": params.binaryIdentifierOverride ?? uuid,
+      "appId": params.appIdOverride ?? Bundle.main.bundleIdentifier,
+      "platform": "ios"
     ]
     if let tagName = params.tagName {
-      components.queryItems?.append(URLQueryItem(name: "tag", value: tagName))
+      queryItems["tag"] = tagName
     }
-    
-    guard let url = components.url else {
-      fatalError("Invalid URL")
-    }
-    var request = URLRequest(url: url)
-    request.httpMethod = "GET"
-    if let accessToken = accessToken {
-      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-    }
+
+    let request = buildRequest(path: "/distribution/checkForUpdates",
+                               accessToken: accessToken,
+                               queryItems: queryItems)
     
     session.checkForUpdate(request) { [weak self] result in
       let mappedResult = result.map { $0.updateInfo }
@@ -231,24 +274,14 @@ public final class ETDistribution: NSObject {
   private func getReleaseInfo(releaseId: String,
                               accessToken: String? = nil,
                               completion: @escaping @MainActor (Result<DistributionReleaseInfo, Error>) -> Void) {
-    guard var components = URLComponents(string: "https://api.emergetools.com/distribution/getRelease") else {
-      fatalError("Invalid URL")
-    }
-    
-    components.queryItems = [
-      URLQueryItem(name: "apiKey", value: apiKey),
-      URLQueryItem(name: "uploadId", value: releaseId),
-      URLQueryItem(name: "platform", value: "ios")
+    let queryItems: [String: String?] = [
+      "apiKey": apiKey,
+      "uploadId": releaseId,
+      "platform": "ios"
     ]
-    
-    guard let url = components.url else {
-      fatalError("Invalid URL")
-    }
-    var request = URLRequest(url: url)
-    request.httpMethod = "GET"
-    if let accessToken = accessToken {
-      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-    }
+    let request = buildRequest(path: "/distribution/getRelease",
+                               accessToken: accessToken,
+                               queryItems: queryItems)
     
     session.getReleaseInfo(request, completion: completion)
   }
@@ -287,5 +320,43 @@ public final class ETDistribution: NSObject {
   
   private func handlePostponeRelease() {
     UserDefaults.postponeTimeout = Date(timeIntervalSinceNow: 60 * 60 * 24)
+  }
+  
+  private func getAllBuilds(params: GetAllReleasesParams,
+                              accessToken: String? = nil,
+                            completion: @escaping @MainActor (Result<DistributionAvailableBuildsResponse, Error>) -> Void) {
+    let queryItems: [String: String?] = [
+      "apiKey": params.apiKey,
+      "binaryIdentifier": params.binaryIdentifierOverride ?? uuid,
+      "appId": params.appIdOverride ?? Bundle.main.bundleIdentifier,
+      "platform": "ios",
+      "page": "\(params.page)"
+    ]
+    let request = buildRequest(path: "/distribution/allUpdates",
+                               accessToken: accessToken,
+                               queryItems: queryItems)
+    
+    session.getAvailableReleases(request, completion: completion)
+  }
+  
+  private func buildRequest(path: String,
+                             accessToken: String?,
+                             queryItems: [String: String?]) -> URLRequest {
+    guard var components = URLComponents(string: "\(ETDistribution.baseUrl)\(path)") else {
+      fatalError("Invalid URL")
+    }
+    
+    components.queryItems = queryItems.map { URLQueryItem(name: $0.key, value: $0.value) }
+    
+    guard let url = components.url else {
+      fatalError("Invalid URL")
+    }
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    if let accessToken = accessToken {
+      request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
+    
+    return request
   }
 }
