@@ -276,7 +276,8 @@ public final class ETDistribution: NSObject {
       return
     }
     UIApplication.shared.open(url) { _ in
-      // Post notification event before closing the app
+      // Post notification event before closing the app, some SDKs may consider exit(0) as an unexpected 
+      // termination otherwise. This is the case for Sentry.
       NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
       
       // Close the app after a slight delay so it has time to execute code for the notification
