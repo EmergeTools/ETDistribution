@@ -276,8 +276,14 @@ public final class ETDistribution: NSObject {
       return
     }
     UIApplication.shared.open(url) { _ in
-      // We need to exit since iOS doesn't start the install until the app exits
-      exit(0)
+      // Post notification event before closing the app
+      NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
+      
+      // Close the app after a slight delay so it has time to execute code for the notification
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // We need to exit since iOS doesn't start the install until the app exits
+        exit(0)
+      }
     }
   }
   
