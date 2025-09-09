@@ -8,40 +8,19 @@
 import Foundation
 
 enum RequestError: Error {
-  case badRequest(String)
   case invalidData
-  case loginRequired
   case unknownError
 }
 
 extension URLSession {
   func checkForUpdate(_ request: URLRequest, completion: @escaping @MainActor (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
-    self.perform(request, decode: DistributionUpdateCheckResponse.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
-      return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
-    }
-  }
-  
-  func getAuthDataWith(_ request: URLRequest, completion: @escaping @MainActor (Result<AuthCodeResponse, Error>) -> Void) {
-    self.perform(request, decode: AuthCodeResponse.self, useCamelCase: false, completion: completion) { _, _ in
-      return RequestError.badRequest("")
-    }
-  }
-  
-  func refreshAccessToken(_ request: URLRequest, completion: @escaping @MainActor (Result<AuthRefreshResponse, Error>) -> Void) {
-    self.perform(request, decode: AuthRefreshResponse.self, useCamelCase: false, completion: completion) { _, _ in
-      return RequestError.badRequest("")
-    }
-  }
-  
-  func getReleaseInfo(_ request: URLRequest, completion: @escaping @MainActor (Result<DistributionReleaseInfo, Error>) -> Void) {
-    self.perform(request, decode: DistributionReleaseInfo.self, useCamelCase: true, completion: completion) { [weak self] data, statusCode in
-      return self?.getErrorFrom(data: data, statusCode: statusCode) ?? RequestError.badRequest("")
+    self.perform(request, decode: DistributionUpdateCheckResponse.self, completion: completion) { [weak self] data, statusCode in
+      return RequestError.unknownError
     }
   }
   
   private func perform<T: Sendable & Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
-                                     useCamelCase: Bool = true,
                                      completion: @escaping @MainActor (Result<T, Error>) -> Void,
                                      decodeErrorData: (@Sendable (Data, Int) -> Error)?) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
@@ -61,31 +40,19 @@ extension URLSession {
         return
       }
       guard (200...299).contains(httpResponse.statusCode) else {
-        let error = decodeErrorData?(data, httpResponse.statusCode) ?? RequestError.badRequest("Unknown error")
-        result = .failure(error)
+        result = .failure(RequestError.unknownError)
         return
       }
       
+      print(String(data: data, encoding: .utf8))
       do {
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.keyDecodingStrategy = useCamelCase ? .useDefaultKeys : .convertFromSnakeCase
+        jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
         result = .success(try jsonDecoder.decode(decodable, from: data))
       } catch {
         result = .failure(error)
       }
     }.resume()
   }
-  
-  private func getErrorFrom(data: Data, statusCode: Int) -> RequestError {
-    let errorMessage = (
-      try? JSONDecoder().decode(
-        DistributionUpdateCheckErrorResponse.self,
-        from: data
-      ).message
-    ) ?? "Unknown error"
-    if statusCode == 403 {
-      return RequestError.loginRequired
-    }
-    return RequestError.badRequest(errorMessage)
-  }
+
 }

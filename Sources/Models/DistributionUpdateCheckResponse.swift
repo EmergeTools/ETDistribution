@@ -7,10 +7,7 @@
 
 import Foundation
 
-struct DistributionUpdateCheckResponse: Decodable {
-  let updateInfo: DistributionReleaseInfo?
-}
-
-struct DistributionUpdateCheckErrorResponse: Decodable {
-  let message: String
+public struct DistributionUpdateCheckResponse: Decodable {
+  public let current: DistributionReleaseInfo?
+  public let update: DistributionReleaseInfo?
 }

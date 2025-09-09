@@ -7,11 +7,8 @@
 
 import Foundation
 
-@objc
-class Constants: NSObject {
-  @objc
-  static let apiKey = "YOUR_API_KEY"
-  
-  @objc
-  static let tagName = "manual"
+final class Constants: NSObject {
+  static let accessToken = "YOUR_ACCESS_TOKEN"
+  static let organization = "YOUR_ORGANIZATION"
+  static let project = "YOUR_PROJECT"
 }

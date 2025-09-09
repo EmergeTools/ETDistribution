@@ -13,22 +13,14 @@ import ETDistribution
 struct UpdateUtil {
   @MainActor
   static func checkForUpdates() {
-    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: false)
+    let params = CheckForUpdateParams(accessToken: Constants.accessToken, organization: Constants.organization, project: Constants.project)
     ETDistribution.shared.checkForUpdate(params: params) { result in
       handleUpdateResult(result: result)
     }
   }
   
   @MainActor
-  static func checkForUpdatesWithLogin() {
-    let params = CheckForUpdateParams(apiKey: Constants.apiKey, requiresLogin: true)
-    ETDistribution.shared.checkForUpdate(params: params) { result in
-      handleUpdateResult(result: result)
-    }
-  }
-  
-  @MainActor
-  static func handleUpdateResult(result: Result<DistributionReleaseInfo?, Error>) {
+  static func handleUpdateResult(result: Result<DistributionUpdateCheckResponse, Error>) {
     guard case let .success(releaseInfo) = result else {
       if case let .failure(error) = result {
         print("Error checking for update: \(error)")
@@ -36,44 +28,12 @@ struct UpdateUtil {
       return
     }
     
-    guard let releaseInfo = releaseInfo else {
+    guard let releaseInfo = releaseInfo.update else {
       print("Already up to date")
       return
     }
     
-    print("Update found: \(releaseInfo), requires login: \(releaseInfo.loginRequiredForDownload)")
-    if releaseInfo.loginRequiredForDownload {
-      // Get new release info, with login
-      ETDistribution.shared.getReleaseInfo(releaseId: releaseInfo.id) { newReleaseInfo in
-        if case let .success(newReleaseInfo) = newReleaseInfo {
-          UpdateUtil.installRelease(releaseInfo: newReleaseInfo)
-        }
-      }
-    } else {
-      UpdateUtil.installRelease(releaseInfo: releaseInfo)
-    }
-  }
-  
-  static func clearTokens() {
-    delete(key: "accessToken") {
-      delete(key: "refreshToken") {
-        print("Tokens cleared")
-      }
-    }
-  }
-  
-  private static func delete(key: String, completion: @escaping @Sendable () -> Void) {
-    DispatchQueue.global().async {
-      let attributes = [
-        kSecClass: kSecClassGenericPassword,
-        kSecAttrService: "com.emerge.ETDistribution",
-        kSecAttrAccount: key,
-      ] as CFDictionary
-
-      SecItemDelete(attributes)
-      
-      completion()
-    }
+    UpdateUtil.installRelease(releaseInfo: releaseInfo)
   }
   
   @MainActor

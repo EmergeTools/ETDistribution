@@ -10,7 +10,6 @@
 		F41853D02CB70E47007F7CE8 /* ETDistribution in Frameworks */ = {isa = PBXBuildFile; productRef = F41853CF2CB70E47007F7CE8 /* ETDistribution */; };
 		F41853D22CB70EE3007F7CE8 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41853D12CB70EE3007F7CE8 /* Constants.swift */; };
 		F41853D42CB70EF0007F7CE8 /* UpdateUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41853D32CB70EF0007F7CE8 /* UpdateUtil.swift */; };
-		F41853D62CB70EF8007F7CE8 /* UpdateUtilObjc.m in Sources */ = {isa = PBXBuildFile; fileRef = F41853D52CB70EF8007F7CE8 /* UpdateUtilObjc.m */; };
 		F4B700BB2D4295C800D255F3 /* ETDistribution in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F41853CF2CB70E47007F7CE8 /* ETDistribution */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		FA1671C32A5367A800A42DB0 /* DemoAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1671C22A5367A800A42DB0 /* DemoAppApp.swift */; };
 		FA1671C52A5367A800A42DB0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA1671C42A5367A800A42DB0 /* ContentView.swift */; };
@@ -35,9 +34,6 @@
 /* Begin PBXFileReference section */
 		F41853D12CB70EE3007F7CE8 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		F41853D32CB70EF0007F7CE8 /* UpdateUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateUtil.swift; sourceTree = "<group>"; };
-		F41853D52CB70EF8007F7CE8 /* UpdateUtilObjc.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UpdateUtilObjc.m; sourceTree = "<group>"; };
-		F41853D72CB70EFA007F7CE8 /* DemoApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "DemoApp-Bridging-Header.h"; sourceTree = "<group>"; };
-		F41853D82CB70F06007F7CE8 /* UpdateUtilObjc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UpdateUtilObjc.h; sourceTree = "<group>"; };
 		FA1671BF2A5367A800A42DB0 /* DemoApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA1671C22A5367A800A42DB0 /* DemoAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoAppApp.swift; sourceTree = "<group>"; };
 		FA1671C42A5367A800A42DB0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -83,9 +79,6 @@
 				FA1671C42A5367A800A42DB0 /* ContentView.swift */,
 				F41853D12CB70EE3007F7CE8 /* Constants.swift */,
 				F41853D32CB70EF0007F7CE8 /* UpdateUtil.swift */,
-				F41853D72CB70EFA007F7CE8 /* DemoApp-Bridging-Header.h */,
-				F41853D82CB70F06007F7CE8 /* UpdateUtilObjc.h */,
-				F41853D52CB70EF8007F7CE8 /* UpdateUtilObjc.m */,
 				FA1671C62A5367A800A42DB0 /* Assets.xcassets */,
 				FA1671C82A5367A800A42DB0 /* DemoApp.entitlements */,
 				FA1671C92A5367A800A42DB0 /* Preview Content */,
@@ -192,7 +185,6 @@
 				FA1671C52A5367A800A42DB0 /* ContentView.swift in Sources */,
 				FA1671C32A5367A800A42DB0 /* DemoAppApp.swift in Sources */,
 				F41853D22CB70EE3007F7CE8 /* Constants.swift in Sources */,
-				F41853D62CB70EF8007F7CE8 /* UpdateUtilObjc.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,7 +344,6 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "DemoApp/DemoApp-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
@@ -399,7 +390,6 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "DemoApp/DemoApp-Bridging-Header.h";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
