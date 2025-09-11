@@ -14,15 +14,12 @@ enum RequestError: Error {
 
 extension URLSession {
   func checkForUpdate(_ request: URLRequest, completion: @escaping @MainActor (Result<DistributionUpdateCheckResponse, Error>) -> Void) {
-    self.perform(request, decode: DistributionUpdateCheckResponse.self, completion: completion) { [weak self] data, statusCode in
-      return RequestError.unknownError
-    }
+    self.perform(request, decode: DistributionUpdateCheckResponse.self, completion: completion)
   }
   
   private func perform<T: Sendable & Decodable>(_ request: URLRequest,
                                      decode decodable: T.Type,
-                                     completion: @escaping @MainActor (Result<T, Error>) -> Void,
-                                     decodeErrorData: (@Sendable (Data, Int) -> Error)?) {
+                                     completion: @escaping @MainActor (Result<T, Error>) -> Void) {
     URLSession.shared.dataTask(with: request) { (data, response, error) in
       var result: Result<T, Error> = .failure(RequestError.unknownError)
       defer {

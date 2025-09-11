@@ -38,15 +38,14 @@ public final class ETDistribution {
   /// ```
   public func checkForUpdate(params: CheckForUpdateParams,
                              completion: @escaping (@MainActor (Result<DistributionUpdateCheckResponse, Error>) -> Void)) {
-    checkRequest(params: params, completion: completion)
+    getUpdatesFromBackend(params: params, completion: completion)
   }
 
   /// Obtain a URL to install an IPA
   /// - Parameter plistUrl: The URL to the plist containing the IPA information
   /// - Returns: a URL ready to install the IPA using Itunes Services
   public func buildUrlForInstall(_ plistUrl: String) -> URL? {
-    guard plistUrl != "REQUIRES_LOGIN",
-      var components = URLComponents(string: "itms-services://") else {
+    guard var components = URLComponents(string: "itms-services://") else {
       return nil
     }
     components.queryItems = [
@@ -59,16 +58,8 @@ public final class ETDistribution {
   // MARK: - Private
   private lazy var session = URLSession(configuration: URLSessionConfiguration.ephemeral)
   private lazy var uuid = BinaryParser.getMainBinaryUUID()
-
-  private func checkRequest(params: CheckForUpdateParams,
-                            completion: (@MainActor (Result<DistributionUpdateCheckResponse, Error>) -> Void)? = nil) {
-    getUpdatesFromBackend(params: params, accessToken: nil) { result in
-      completion?(result)
-    }
-  }
   
   private func getUpdatesFromBackend(params: CheckForUpdateParams,
-                              accessToken: String? = nil,
                                      completion: @escaping (@MainActor (Result<DistributionUpdateCheckResponse, Error>) -> Void)) {
     guard var components = URLComponents(string: "http://\(params.hostname)/api/0/projects/\(params.organization)/\(params.project)/preprodartifacts/check-for-updates/") else {
       fatalError("Invalid URL")
@@ -90,22 +81,6 @@ public final class ETDistribution {
     
     session.checkForUpdate(request) { result in
       completion(result)
-    }
-  }
-  
-  private func installAppWithDownloadString(_ urlString: String) {
-    guard let url = self.buildUrlForInstall(urlString) else {
-      return
-    }
-    UIApplication.shared.open(url) { _ in
-      // Post notification event before closing the app
-      NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
-      
-      // Close the app after a slight delay so it has time to execute code for the notification
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        // We need to exit since iOS doesn't start the install until the app exits
-        exit(0)
-      }
     }
   }
 }
